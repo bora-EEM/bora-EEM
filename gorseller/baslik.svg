@@ -12,13 +12,25 @@
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
     <clipPath id="k1"><rect x="72" y="140" height="30" width="0">
-      <animate attributeName="width" dur="12s" repeatCount="indefinite" values="0;306;306;0;0" keyTimes="0;0.117;0.30;0.301;1"/>
+      <animate attributeName="width" dur="23.8s" repeatCount="indefinite" values="0;306;306;0;0" keyTimes="0;0.0630;0.1408;0.1412;1"/>
     </rect></clipPath>
     <clipPath id="k2"><rect x="72" y="140" height="30" width="0">
-      <animate attributeName="width" dur="12s" repeatCount="indefinite" values="0;0;275;275;0;0" keyTimes="0;0.333;0.45;0.633;0.634;1"/>
+      <animate attributeName="width" dur="23.8s" repeatCount="indefinite" values="0;0;296;296;0;0" keyTimes="0;0.1429;0.2038;0.2836;0.2840;1"/>
     </rect></clipPath>
     <clipPath id="k3"><rect x="72" y="140" height="30" width="0">
-      <animate attributeName="width" dur="12s" repeatCount="indefinite" values="0;0;337;337;0;0" keyTimes="0;0.667;0.784;0.967;0.968;1"/>
+      <animate attributeName="width" dur="23.8s" repeatCount="indefinite" values="0;0;337;337;0;0" keyTimes="0;0.2857;0.3550;0.4265;0.4269;1"/>
+    </rect></clipPath>
+    <clipPath id="k4"><rect x="72" y="140" height="30" width="0">
+      <animate attributeName="width" dur="23.8s" repeatCount="indefinite" values="0;0;337;337;0;0" keyTimes="0;0.4286;0.4979;0.5693;0.5697;1"/>
+    </rect></clipPath>
+    <clipPath id="k5"><rect x="72" y="140" height="30" width="0">
+      <animate attributeName="width" dur="23.8s" repeatCount="indefinite" values="0;0;224;224;0;0" keyTimes="0;0.5714;0.6176;0.7122;0.7126;1"/>
+    </rect></clipPath>
+    <clipPath id="k6"><rect x="72" y="140" height="30" width="0">
+      <animate attributeName="width" dur="23.8s" repeatCount="indefinite" values="0;0;306;306;0;0" keyTimes="0;0.7143;0.7773;0.8550;0.8555;1"/>
+    </rect></clipPath>
+    <clipPath id="k7"><rect x="72" y="140" height="30" width="0">
+      <animate attributeName="width" dur="23.8s" repeatCount="indefinite" values="0;0;255;255;0" keyTimes="0;0.8571;0.9097;0.9979;1"/>
     </rect></clipPath>
     <path id="y1" d="M580,118 H612 V80 H650 L735,112 L822,108"/>
     <path id="y2" d="M580,140 H650 L735,168 L822,172"/>
@@ -41,26 +53,58 @@
   <g font-family="ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace" font-size="17">
     <text x="48" y="162" fill="#34e0a1" font-weight="700">&gt;</text>
     <text x="72" y="162" fill="#c9d1d9" textLength="306" lengthAdjust="spacing" clip-path="url(#k1)">Fikri çalışan ürüne çeviririm.</text>
-    <text x="72" y="162" fill="#c9d1d9" textLength="275" lengthAdjust="spacing" clip-path="url(#k2)">Birlikte üretmeye açığım.</text>
-    <text x="72" y="162" fill="#c9d1d9" textLength="337" lengthAdjust="spacing" clip-path="url(#k3)">Ajanları bir ekip gibi yönetirim.</text>
-    <g>
-      <animate attributeName="opacity" dur="12s" repeatCount="indefinite" calcMode="discrete" values="1;0" keyTimes="0;0.333"/>
+    <text x="72" y="162" fill="#c9d1d9" textLength="296" lengthAdjust="spacing" clip-path="url(#k2)">Devreden yapay zekâya geçtim.</text>
+    <text x="72" y="162" fill="#c9d1d9" textLength="337" lengthAdjust="spacing" clip-path="url(#k3)">Sorunu yaşayanın gününde çözerim.</text>
+    <text x="72" y="162" fill="#c9d1d9" textLength="337" lengthAdjust="spacing" clip-path="url(#k4)">Ajanları bir ekip gibi yönetirim.</text>
+    <text x="72" y="162" fill="#c9d1d9" textLength="224" lengthAdjust="spacing" clip-path="url(#k5)">Denemeden bitti demem.</text>
+    <text x="72" y="162" fill="#c9d1d9" textLength="306" lengthAdjust="spacing" clip-path="url(#k6)">Öğrendiğimi açıkta paylaşırım.</text>
+    <text x="72" y="162" fill="#c9d1d9" textLength="255" lengthAdjust="spacing" clip-path="url(#k7)">Birlikte üretmeye açığım.</text>
+    <g opacity="1">
+      <animate attributeName="opacity" dur="23.8s" repeatCount="indefinite" calcMode="discrete" values="1;0" keyTimes="0;0.1412"/>
       <rect y="146" width="9" height="20" fill="#34e0a1" x="76">
-        <animate attributeName="x" dur="12s" repeatCount="indefinite" values="76;382;382;382" keyTimes="0;0.117;0.30;1"/>
+        <animate attributeName="x" dur="23.8s" repeatCount="indefinite" values="76;382;382" keyTimes="0;0.0630;1"/>
         <animate attributeName="fill-opacity" dur="0.9s" repeatCount="indefinite" values="1;1;0.15;1" keyTimes="0;0.5;0.75;1"/>
       </rect>
     </g>
     <g opacity="0">
-      <animate attributeName="opacity" dur="12s" repeatCount="indefinite" calcMode="discrete" values="0;1;0" keyTimes="0;0.333;0.667"/>
+      <animate attributeName="opacity" dur="23.8s" repeatCount="indefinite" calcMode="discrete" values="0;1;0" keyTimes="0;0.1429;0.2840"/>
       <rect y="146" width="9" height="20" fill="#34e0a1" x="76">
-        <animate attributeName="x" dur="12s" repeatCount="indefinite" values="76;76;351;351" keyTimes="0;0.333;0.45;1"/>
+        <animate attributeName="x" dur="23.8s" repeatCount="indefinite" values="76;76;372;372" keyTimes="0;0.1429;0.2038;1"/>
         <animate attributeName="fill-opacity" dur="0.9s" repeatCount="indefinite" values="1;1;0.15;1" keyTimes="0;0.5;0.75;1"/>
       </rect>
     </g>
     <g opacity="0">
-      <animate attributeName="opacity" dur="12s" repeatCount="indefinite" calcMode="discrete" values="0;1" keyTimes="0;0.667"/>
+      <animate attributeName="opacity" dur="23.8s" repeatCount="indefinite" calcMode="discrete" values="0;1;0" keyTimes="0;0.2857;0.4269"/>
       <rect y="146" width="9" height="20" fill="#34e0a1" x="76">
-        <animate attributeName="x" dur="12s" repeatCount="indefinite" values="76;76;413;413" keyTimes="0;0.667;0.784;1"/>
+        <animate attributeName="x" dur="23.8s" repeatCount="indefinite" values="76;76;413;413" keyTimes="0;0.2857;0.3550;1"/>
+        <animate attributeName="fill-opacity" dur="0.9s" repeatCount="indefinite" values="1;1;0.15;1" keyTimes="0;0.5;0.75;1"/>
+      </rect>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" dur="23.8s" repeatCount="indefinite" calcMode="discrete" values="0;1;0" keyTimes="0;0.4286;0.5697"/>
+      <rect y="146" width="9" height="20" fill="#34e0a1" x="76">
+        <animate attributeName="x" dur="23.8s" repeatCount="indefinite" values="76;76;413;413" keyTimes="0;0.4286;0.4979;1"/>
+        <animate attributeName="fill-opacity" dur="0.9s" repeatCount="indefinite" values="1;1;0.15;1" keyTimes="0;0.5;0.75;1"/>
+      </rect>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" dur="23.8s" repeatCount="indefinite" calcMode="discrete" values="0;1;0" keyTimes="0;0.5714;0.7126"/>
+      <rect y="146" width="9" height="20" fill="#34e0a1" x="76">
+        <animate attributeName="x" dur="23.8s" repeatCount="indefinite" values="76;76;300;300" keyTimes="0;0.5714;0.6176;1"/>
+        <animate attributeName="fill-opacity" dur="0.9s" repeatCount="indefinite" values="1;1;0.15;1" keyTimes="0;0.5;0.75;1"/>
+      </rect>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" dur="23.8s" repeatCount="indefinite" calcMode="discrete" values="0;1;0" keyTimes="0;0.7143;0.8555"/>
+      <rect y="146" width="9" height="20" fill="#34e0a1" x="76">
+        <animate attributeName="x" dur="23.8s" repeatCount="indefinite" values="76;76;382;382" keyTimes="0;0.7143;0.7773;1"/>
+        <animate attributeName="fill-opacity" dur="0.9s" repeatCount="indefinite" values="1;1;0.15;1" keyTimes="0;0.5;0.75;1"/>
+      </rect>
+    </g>
+    <g opacity="0">
+      <animate attributeName="opacity" dur="23.8s" repeatCount="indefinite" calcMode="discrete" values="0;1" keyTimes="0;0.8571"/>
+      <rect y="146" width="9" height="20" fill="#34e0a1" x="76">
+        <animate attributeName="x" dur="23.8s" repeatCount="indefinite" values="76;76;331;331" keyTimes="0;0.8571;0.9097;1"/>
         <animate attributeName="fill-opacity" dur="0.9s" repeatCount="indefinite" values="1;1;0.15;1" keyTimes="0;0.5;0.75;1"/>
       </rect>
     </g>

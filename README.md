@@ -11,9 +11,7 @@
 
 <br>
 
-Ben Bora. Bursa Uludağ Üniversitesi'nde elektrik-elektronik mühendisliği okuyorum; derslerim bitti, mezuniyet için 30 iş günlük stajım kaldı. Kuzey Labs'i kurdum, küçük ve her gün işe yarayan uygulamalar yapıyoruz.
-
-Kodun çoğunu Claude Code ve Codex yazıyor. Neyin yapılacağına ve işin ne zaman bitmiş sayılacağına ben karar veriyorum. Bir şeye bitti demeden önce her düğmesine kendim basarım.
+Ben Bora. Bursa Uludağ Üniversitesi'nde elektrik-elektronik mühendisliği okuyorum. Kuzey Labs'i kurdum, küçük ve her gün işe yarayan uygulamalar yapıyoruz.
 
 ## İşinize yarayabilecekler
 
@@ -48,19 +46,17 @@ Kodun çoğunu Claude Code ve Codex yazıyor. Neyin yapılacağına ve işin ne 
   </tr>
 </table>
 
-## Doğrudan yazmak isterseniz
+## Kuzey Labs'e katılmak isterseniz
 
-Staj için okul adresim [032211019@ogr.uludag.edu.tr](mailto:032211019@ogr.uludag.edu.tr). İş, proje ya da tanıtım için [info@kuzeylabs.com](mailto:info@kuzeylabs.com). Kuzey Labs ekibine katılmak isterseniz [kuzeylabs.com](https://kuzeylabs.com)'daki "Aramıza katıl" formunu doldurun.
+Ekipte tasarım, kod, test, çeviri ya da tanıtımla yer almak isterseniz [Aramıza katıl](https://kuzeylabs.com/#katil) formunu doldurun. Uygulamalarımızı herkesten önce denemek isterseniz [deneme ekibine](https://kuzeylabs.com/#deneme) yazılın. İş, proje, tanıtım ya da başka bir destek teklifi için [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
 
 <details>
 <summary><b>English</b></summary>
 <br>
 
-I'm Bora, an electrical and electronics engineering student at Bursa Uludağ University. My courses are done; a 30-working-day internship is all that's left before I graduate. I founded Kuzey Labs, where we build small apps that are useful every day.
+I'm Bora, an electrical and electronics engineering student at Bursa Uludağ University. I founded Kuzey Labs, where we build small apps that are useful every day.
 
-Claude Code and Codex write most of the code. I decide what gets built and when it counts as done, and I press every button myself before I call anything finished.
-
-For internships: [032211019@ogr.uludag.edu.tr](mailto:032211019@ogr.uludag.edu.tr). For work, projects or promotion: [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
+To join Kuzey Labs or test our apps early, use the forms on [kuzeylabs.com](https://kuzeylabs.com/#katil). For work, projects or promotion: [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
 
 </details>
 
