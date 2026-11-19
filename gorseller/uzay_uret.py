@@ -6,9 +6,11 @@ Katmanlar arkadan öne:
   2. Samanyolu: çok katmanlı fraktal gürültüden bulutsu, koyu toz yarıkları ve pembe H-II bölgeleri,
      şeride Gauss dağılımıyla serpilmiş, kara cisim renk sıcaklığına göre boyanmış yıldızlar
   3. kırınım çivili parlak yıldızlar
-  4. Küçük Ayı takımyıldızı (çizgi çizgi çizilir) ve Kuzey Yıldızı'nın etrafında dönen gösterge halkaları
-  5. yörüngede halkalı gezegen, kayan yıldızlar
-  6. motor parçacıkları geride iz bırakan, takla atan roket
+  4. arkada sönük duran Kuzey Yıldızı; arada Büyük Ayı çizgi çizgi birleşir, kepçenin ağzı Kuzey Yıldızı'nı
+     gösterir ve o an yıldız bütün gösterge halkalarıyla parlar
+  5. kayan yıldızlar
+  6. 60 saniyelik senaryo: önce takla atan roket geçer, sonra üstten Apollo süzülür, ardından bir uçan daire
+     yazıyı çekici ışınla tarar, bir avcıyla karşılaşır, ışıkla selamlaşırlar, avcı ışık hızına atlar
 Çalıştırma: python uzay_uret.py  ->  kuzey-uzay.svg
 """
 from __future__ import annotations
@@ -24,7 +26,11 @@ BANT_ACI = -math.degrees(math.atan2(H, W))   # sol alttan Kuzey Yıldızı'na do
 KUTUP = (720.0, 96.0)             # Kuzey Yıldızı
 ROKET_YOLU = ("M-80,252 C120,292 262,204 404,238 C506,264 566,186 522,156 "
               "C478,126 436,204 522,234 C646,278 768,216 980,188")
-ROKET_SURE = 9.0
+ROKET_SURE = 9.0                  # roketin sahneyi geçtiği süre
+DONGU = 60.0                      # senaryonun tamamı; roket döngünün başında bir kez geçer
+BUYUK_AYI = (17.0, 48.2)          # Büyük Ayı’nın birleştiği anlar (ikincisi avcının ışık hızına atladığı an)
+KOLAY = "0.45 0 0.55 1"           # yumuşak hızlanıp yavaşlama
+DUZ = "0 0 1 1"                   # sabit hız
 
 # Yıldız renkleri: tayf sınıfına göre yaklaşık kara cisim rengi ve gökyüzündeki payı
 TAYF = [("#9bb0ff", 0.06), ("#aabfff", 0.10), ("#cad7ff", 0.16), ("#f8f7ff", 0.30),
@@ -47,6 +53,43 @@ def parlaklik(r: random.Random, en_kucuk: float, en_buyuk: float, us: float = 2.
 
 def f(x: float) -> str:
     return f"{x:.1f}".rstrip("0").rstrip(".")
+
+
+def cizelge(noktalar: list[tuple], d: float = DONGU) -> str:
+    """[(saniye, değer[, eğri])] -> SMIL values/keyTimes/keySplines; döngünün başı ve sonu kendiliğinden tutulur."""
+    n = [(t, v, e[0] if e else KOLAY) for t, v, *e in noktalar]
+    if n[0][0] > 0:
+        n.insert(0, (0.0, n[0][1], DUZ))
+    if n[-1][0] < d:
+        n.append((d, n[-1][1], DUZ))
+    kt = ";".join(f"{t / d:.5f}" for t, _, _ in n)
+    return (f'values="{";".join(str(v) for _, v, _ in n)}" keyTimes="{kt}" calcMode="spline" '
+            f'keySplines="{";".join(e for _, _, e in n[1:])}" dur="{d:g}s" repeatCount="indefinite"')
+
+
+def tasi(noktalar: list[tuple]) -> str:
+    return f'<animateTransform attributeName="transform" type="translate" {cizelge(noktalar)}/>'
+
+
+def dondur(noktalar: list[tuple]) -> str:
+    return f'<animateTransform attributeName="transform" type="rotate" {cizelge(noktalar)}/>'
+
+
+def olcekle(noktalar: list[tuple]) -> str:
+    return f'<animateTransform attributeName="transform" type="scale" {cizelge(noktalar)}/>'
+
+
+def degistir(nitelik: str, noktalar: list[tuple]) -> str:
+    return f'<animate attributeName="{nitelik}" {cizelge(noktalar)}/>'
+
+
+def gorun(noktalar: list[tuple]) -> str:
+    return degistir("opacity", noktalar)
+
+
+def sallan(dy: float, sure: float) -> str:
+    return (f'<animateTransform attributeName="transform" type="translate" values="0 0;0 {dy};0 0" '
+            f'dur="{sure}s" repeatCount="indefinite"/>')
 
 
 class Sahne:
@@ -126,9 +169,6 @@ class Sahne:
   <linearGradient id="govde" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#d7dee8"/><stop offset="1" stop-color="#8b95a5"/>
   </linearGradient>
-  <radialGradient id="gezegen" cx="0.35" cy="0.35" r="0.75">
-    <stop offset="0" stop-color="#b9ffe3"/><stop offset="0.5" stop-color="#34e0a1"/><stop offset="1" stop-color="#0b5d45"/>
-  </radialGradient>
   <radialGradient id="yaziGolge" cx="0.5" cy="0.5" r="0.5">
     <stop offset="0" stop-color="#04060e" stop-opacity="0.7"/><stop offset="1" stop-color="#04060e" stop-opacity="0"/>
   </radialGradient>
@@ -154,7 +194,6 @@ class Sahne:
     <circle r="1.3" fill="#fff"/>
   </g>
   <path id="roketYolu" d="{ROKET_YOLU}"/>
-  <path id="yorunge" d="M{f(KUTUP[0] - 118)},{f(KUTUP[1])} a118,38 0 1,1 236,0 a118,38 0 1,1 -236,0"/>
 </defs>''')
 
     # ---------- 1. zemin ve paralaks yıldızlar ----------
@@ -222,26 +261,52 @@ class Sahne:
                       f'<animateTransform attributeName="transform" type="scale" values="{s:.2f};{s * 0.7:.2f};{s:.2f}" '
                       f'dur="{sure:.1f}s" repeatCount="indefinite"/></g></g>')
 
-    # ---------- 4. Küçük Ayı ve Kuzey Yıldızı ----------
+    # ---------- 4. Büyük Ayı ve Kuzey Yıldızı ----------
     def takimyildiz(self) -> None:
-        y = [(520, 172), (506, 214), (562, 226), (568, 180), (612, 150), (662, 122), KUTUP]
-        kenar = [(0, 1), (1, 2), (2, 3), (3, 0), (3, 4), (4, 5), (5, 6)]
-        T = 12.0
-        self.ekle('<g stroke="#b9d3ff" stroke-width="1.1" stroke-linecap="round" opacity="0.85">')
-        for k, (i, j) in enumerate(kenar):
-            (x1, y1), (x2, y2) = y[i], y[j]
-            L = math.dist((x1, y1), (x2, y2))
-            bas, son = (0.4 + 0.45 * k) / T, (0.85 + 0.45 * k) / T
-            self.ekle(f'<line x1="{x1}" y1="{y1}" x2="{f(x2)}" y2="{f(y2)}" stroke-dasharray="{L:.0f}" stroke-dashoffset="{L:.0f}">'
-                      f'<animate attributeName="stroke-dashoffset" dur="{T}s" repeatCount="indefinite" '
-                      f'values="{L:.0f};{L:.0f};0;0;{L:.0f}" keyTimes="0;{bas:.3f};{son:.3f};0.93;1"/></line>')
-        self.ekle("</g>")
-        for x, yy in y[:-1]:
-            self.ekle(f'<circle cx="{x}" cy="{yy}" r="2.4" fill="#f4f7ff" filter="url(#isik)"/>')
-
         kx, ky = KUTUP
+        # Büyük Ayı'nın gökteki yaklaşık biçimi (Dubhe'ye göre); kepçenin ağzı Merak'tan Dubhe'ye doğru Kuzey Yıldızı'nı gösterir
+        bicim = {"dubhe": (0, 0), "merak": (2, 26), "phecda": (-32, 34), "megrez": (-38, 12),
+                 "alioth": (-60, 8), "mizar": (-80, 10), "alkaid": (-104, 24)}
+        dubhe = (790.0, 195.0)
+        hedef = math.atan2(ky - dubhe[1], kx - dubhe[0])
+        donus = hedef - math.atan2(-26, -2)        # Merak->Dubhe yönünü Kuzey Yıldızı'na çevir
+        c, sn = math.cos(donus), math.sin(donus)
+        yer = {ad: (dubhe[0] + x * c - y * sn, dubhe[1] + x * sn + y * c) for ad, (x, y) in bicim.items()}
+        merak, phecda, megrez, alioth, mizar, alkaid = (yer[a] for a in ("merak", "phecda", "megrez", "alioth", "mizar", "alkaid"))
+        kenar = [(alkaid, mizar), (mizar, alioth), (alioth, megrez), (megrez, dubhe),
+                 (dubhe, merak), (merak, phecda), (phecda, megrez)]
+
+        def her_olayda(parca) -> list[tuple]:
+            return [nk for s0 in BUYUK_AYI for nk in parca(s0)]
+
+        # çizgiler sırayla çizilir, kepçenin ağzından Kuzey Yıldızı'na kesik bir çizgi uzanır, sonra hepsi söner
+        self.ekle(f'<g stroke="#b9d3ff" stroke-width="1.1" stroke-linecap="round" opacity="0">'
+                  + gorun(her_olayda(lambda s0: [(s0, 0), (s0 + 0.05, 0.85), (s0 + 6.4, 0.85), (s0 + 7.4, 0)])))
+        for k, ((x1, y1), (x2, y2)) in enumerate(kenar):
+            L = math.dist((x1, y1), (x2, y2))
+            ciz = her_olayda(lambda s0: [(s0 + 0.3 * k, round(L)), (s0 + 0.3 * k + 0.35, 0),
+                                         (s0 + 7.45, 0), (s0 + 7.5, round(L), DUZ)])
+            self.ekle(f'<line x1="{f(x1)}" y1="{f(y1)}" x2="{f(x2)}" y2="{f(y2)}" stroke-dasharray="{L:.0f}" '
+                      f'stroke-dashoffset="{L:.0f}">{degistir("stroke-dashoffset", ciz)}</line>')
+        isaret = [(eksen, her_olayda(lambda s0, a=a, b=b: [(s0 + 2.3, f(a)), (s0 + 3.2, f(b)), (s0 + 7.45, f(b)), (s0 + 7.5, f(a), DUZ)]))
+                  for eksen, a, b in (("x2", dubhe[0], kx), ("y2", dubhe[1], ky))]
+        self.ekle(f'<line x1="{f(dubhe[0])}" y1="{f(dubhe[1])}" x2="{f(dubhe[0])}" y2="{f(dubhe[1])}" stroke="#dbe7ff" '
+                  f'stroke-dasharray="3 3.5" stroke-width="1.2">' + "".join(degistir(e, nk) for e, nk in isaret) + "</line></g>")
+        # yıldızlar hep yerinde, olayda parlar; Mizar'ın yanında sönük eşi Alcor
+        self.ekle('<g opacity="0.5">' + gorun(her_olayda(lambda s0: [(s0, 0.5), (s0 + 0.6, 1), (s0 + 6.4, 1), (s0 + 7.4, 0.5)])))
+        for (x, yy), r in zip((dubhe, merak, phecda, megrez, alioth, mizar, alkaid), (2.4, 2.1, 2.0, 1.6, 2.2, 2.1, 2.1)):
+            self.ekle(f'<circle cx="{f(x)}" cy="{f(yy)}" r="{r}" fill="#f4f7ff" filter="url(#isik)"/>')
+        self.ekle(f'<circle cx="{f(mizar[0] + 3.4)}" cy="{f(mizar[1] - 3.6)}" r="0.8" fill="#dfe8ff"/></g>')
+
+        # Kuzey Yıldızı: tek başına sönük bir yıldız; göstergeleri yalnız Büyük Ayı ona uzandığında yanar
         altigen = " ".join(f"{f(58 * math.cos(math.radians(60 * i - 90)))},{f(58 * math.sin(math.radians(60 * i - 90)))}" for i in range(6))
+        yan = gorun(her_olayda(lambda s0: [(s0 + 3.0, 0.1), (s0 + 3.5, 1), (s0 + 6.4, 1), (s0 + 7.4, 0.1)]))
+        dalga = her_olayda(lambda s0: [(s0 + 3.2, 4), (s0 + 4.4, 70, "0.2 0.6 0.4 1")])
+        dalga_op = her_olayda(lambda s0: [(s0 + 3.15, 0), (s0 + 3.25, 0.9), (s0 + 4.4, 0)])
         self.ekle(f'''<g transform="translate({kx} {ky})">
+  <circle r="5" fill="url(#cekirdekIsik)" opacity="0.6"/><circle r="1.7" fill="#fff" filter="url(#isik)" opacity="0.85"/>
+  <circle r="4" fill="none" stroke="#cfe6ff" stroke-width="1.4" opacity="0">{degistir("r", dalga)}{gorun(dalga_op)}</circle>
+  <g opacity="0.1">{yan}
   <g opacity="0.75"><polygon points="{altigen}" fill="none" stroke="url(#galxe)" stroke-width="1.2"/>
     <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="48s" repeatCount="indefinite"/></g>
   <g opacity="0.55"><circle r="45" fill="none" stroke="#58a6ff" stroke-width="1.4" stroke-dasharray="48 22 8 22"/>
@@ -252,19 +317,13 @@ class Sahne:
   <g filter="url(#isik)"><path d="M0,-19 L2.6,-2.6 L19,0 L2.6,2.6 L0,19 L-2.6,2.6 L-19,0 L-2.6,-2.6 Z" fill="#fff"/>
     <path d="M0,-9 L1.2,-1.2 L9,0 L1.2,1.2 L0,9 L-1.2,1.2 L-9,0 L-1.2,-1.2 Z" fill="#fff" transform="rotate(45)"/>
     <animateTransform attributeName="transform" type="rotate" values="0;12;0" dur="7s" repeatCount="indefinite"/></g>
+  <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="9.5" font-weight="700" fill="#c9d8ff">
+    <text y="76" text-anchor="middle" letter-spacing="1.2">POLARIS · α UMi</text>
+    <text y="88" text-anchor="middle" fill="#9fb0d6">+89° 15′ 51″</text></g>
+  </g>
 </g>''')
-        self.ekle(f'<g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="9.5" font-weight="700" fill="#c9d8ff">'
-                  f'<text x="{kx}" y="{ky + 76}" text-anchor="middle" letter-spacing="1.2">POLARIS · α UMi</text>'
-                  f'<text x="{kx}" y="{ky + 88}" text-anchor="middle" fill="#9fb0d6">+89° 15′ 51″</text></g>')
 
-    # ---------- 5. gezegen ve kayan yıldızlar ----------
-    def gezegen(self) -> None:
-        self.ekle('<ellipse cx="%s" cy="%s" rx="118" ry="38" fill="none" stroke="#34e0a1" stroke-opacity="0.18" stroke-dasharray="2 6">'
-                  '<animate attributeName="stroke-dashoffset" values="0;80" dur="8s" repeatCount="indefinite"/></ellipse>' % KUTUP)
-        self.ekle('<g><animateMotion dur="14s" repeatCount="indefinite"><mpath href="#yorunge"/></animateMotion>'
-                  '<circle r="7" fill="url(#gezegen)"/>'
-                  '<ellipse rx="13" ry="3.4" fill="none" stroke="#d9fff1" stroke-width="1.1" stroke-opacity="0.85" transform="rotate(-20)"/></g>')
-
+    # ---------- 5. kayan yıldızlar ----------
     def kayan_yildizlar(self) -> None:
         for bas, (x0, y0), (x1, y1), sure in [(1.5, (250, 20), (430, 92), 11), (6.8, (560, 250), (760, 300), 13), (9.2, (60, 40), (210, 110), 17)]:
             aci = math.degrees(math.atan2(y1 - y0, x1 - x0))
@@ -285,16 +344,19 @@ class Sahne:
     # ---------- 6. roket ve motor izi ----------
     def roket(self) -> None:
         # motor izi: aynı yolu biraz geriden izleyen parçacıklar; negatif başlangıç gecikme verir
+        # döngünün yalnız ilk ROKET_SURE saniyesinde yolu baştan sona geçer, kalan sürede sahne dışında bekler
+        gecis = (f'dur="{DONGU:g}s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" '
+                 f'keyTimes="0;{ROKET_SURE / DONGU:.4f};1"')
         self.ekle('<g filter="url(#duman)">')
         for k in range(1, 19):
             gecikme = k * 0.045
             rr = 1.6 + k * 0.32
             renk = "#ffd27a" if k < 5 else ("#ff9b54" if k < 10 else "#8792a6")
             op = max(0.05, 0.85 - k * 0.045)
-            self.ekle(f'<circle r="{f(rr)}" fill="{renk}" opacity="{op:.2f}"><animateMotion dur="{ROKET_SURE}s" '
-                      f'begin="-{ROKET_SURE - gecikme:.3f}s" repeatCount="indefinite"><mpath href="#roketYolu"/></animateMotion></circle>')
+            self.ekle(f'<circle r="{f(rr)}" fill="{renk}" opacity="{op:.2f}"><animateMotion {gecis} '
+                      f'begin="-{DONGU - gecikme:.3f}s"><mpath href="#roketYolu"/></animateMotion></circle>')
         self.ekle("</g>")
-        self.ekle(f'''<g><animateMotion dur="{ROKET_SURE}s" repeatCount="indefinite" rotate="auto"><mpath href="#roketYolu"/></animateMotion>
+        self.ekle(f'''<g><animateMotion {gecis} rotate="auto"><mpath href="#roketYolu"/></animateMotion>
   <g transform="translate(-24 0)"><path d="M0,-4 L-14,0 L0,4 Z" fill="#ffcf6b"><animateTransform attributeName="transform" type="scale"
     values="1 1;1.45 0.8;0.85 1.1;1 1" dur="0.22s" repeatCount="indefinite"/></path>
     <path d="M0,-2.2 L-7,0 L0,2.2 Z" fill="#fff"/></g>
@@ -304,6 +366,144 @@ class Sahne:
   <circle cx="-2" cy="0" r="3.4" fill="#0b1424" stroke="#58a6ff" stroke-width="1.5"/>
   <circle cx="-3" cy="-1" r="1" fill="#cfe6ff"/>
 </g>''')
+
+    # ---------- 7. olaylar: 60 saniyelik senaryo ----------
+    # 0-9 sn roket geçer, 11-30 sn Apollo süzülür, 31-38 sn uçan daire yazıyı çekici ışınla tarar,
+    # 38-47 sn bir avcıyla karşılaşır ve ışıkla selamlaşırlar, avcı Kuzey Yıldızı'na doğru ışık hızına atlar,
+    # uçan daire de hızla uzaklaşır.
+    DAIRE = (530, 234)                 # karşılaşmada uçan dairenin durduğu yer
+    AVCI = (392, 252)                  # avcının durduğu yer
+
+    def olaylar(self) -> None:
+        self.ekle('''<defs>
+  <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f6f8fc"/><stop offset="0.45" stop-color="#c3cad6"/><stop offset="1" stop-color="#5d6573"/>
+  </linearGradient>
+  <linearGradient id="nozul" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#2a2e37"/><stop offset="1" stop-color="#7b8392"/>
+  </linearGradient>
+  <linearGradient id="kubbe" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#e0fbff" stop-opacity="0.95"/><stop offset="0.6" stop-color="#58d5ff" stop-opacity="0.55"/><stop offset="1" stop-color="#1d4ed8" stop-opacity="0.45"/>
+  </linearGradient>
+  <linearGradient id="cekim" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#b6ffe4" stop-opacity="0.7"/><stop offset="1" stop-color="#34e0a1" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="parlama" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="#cfe6ff" stop-opacity="0.8"/><stop offset="1" stop-color="#58a6ff" stop-opacity="0"/>
+  </radialGradient>
+  <clipPath id="koni"><path d="M-10,6 L10,6 L78,132 L-78,132 Z"/></clipPath>
+  <clipPath id="servisKesit"><rect x="-13.3" y="-10" width="30" height="20"/></clipPath>
+</defs>''')
+        self.apollo(); self.daire(); self.avci(); self.selamlasma()
+
+    def apollo(self) -> None:
+        """Komuta ve servis modülü: üstten sabit hızla süzülür, yavaşça döner, ara ara yön iticileri püskürür."""
+        puf = lambda anlar: (gorun([nk for t in anlar for nk in [(t - 0.05, 0), (t, 0.9), (t + 0.6, 0)]])
+                             + degistir("r", [nk for t in anlar for nk in [(t - 0.05, 0.6), (t + 0.6, 5)]]))
+        self.ekle(f'''<g opacity="0">{gorun([(10.8, 0), (11.3, 1), (29.3, 1), (29.8, 0)])}
+<g>{tasi([(11, "960 40"), (29.8, "-90 22", DUZ)])}
+ <text y="-17" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="7.5" font-weight="700"
+   letter-spacing="1.2" fill="#9fb0d6">APOLLO · CSM</text>
+ <g>{dondur([(11, -10), (29.8, 18, DUZ)])}<g transform="scale(0.9)">
+  <circle cx="-7" cy="-15" r="1" fill="#fff" opacity="0">{puf([15.6, 23.2])}</circle>
+  <circle cx="-7" cy="15" r="1" fill="#fff" opacity="0">{puf([19.4, 26.4])}</circle>
+  <path d="M16.7,-5 L29,-9.5 L29,9.5 L16.7,5 Z" fill="url(#nozul)"/>
+  <path d="M12,10 L15.5,18.5" stroke="#aab2c0" stroke-width="0.9"/>
+  <g fill="#dfe4ec"><circle cx="13.6" cy="18.6" r="1.8"/><circle cx="17.4" cy="18.6" r="1.8"/><circle cx="13.6" cy="22.4" r="1.8"/><circle cx="17.4" cy="22.4" r="1.8"/></g>
+  <rect x="-13.3" y="-10" width="30" height="20" fill="url(#metal)"/>
+  <rect x="-1" y="-10" width="7" height="20" fill="#f1f4f9" opacity="0.5"/>
+  <path d="M-6,-10 V10 M3,-10 V10 M11,-10 V10" stroke="#7d8696" stroke-width="0.6"/>
+  <g clip-path="url(#servisKesit)"><rect x="-20" y="-10" width="3" height="20" fill="#fff" opacity="0.55">
+    <animate attributeName="x" values="-20;20" dur="3.4s" repeatCount="indefinite"/></rect></g>
+  <rect x="-9" y="-12.6" width="4" height="2.6" fill="#a9b1bf"/><rect x="-9" y="10" width="4" height="2.6" fill="#a9b1bf"/>
+  <rect x="-15.5" y="-11.5" width="2.2" height="23" rx="1" fill="#8a6a4a"/>
+  <path d="M-31,-3 Q-32.2,0 -31,3 L-15,11 L-15,-11 Z" fill="url(#metal)"/>
+  <rect x="-24" y="-3.5" width="2.4" height="2.4" fill="#1b2433"/><circle cx="-22.8" cy="-2.3" r="0.6" fill="#ffd27a"/>
+ </g></g>
+</g></g>''')
+
+    def daire(self) -> None:
+        """Uçan daire: yukarıdan iner, yazıyı çekici ışınla iki kez tarar, karşılaşma yerine geçer, sonunda sallanıp kaçar."""
+        dx, dy = self.DAIRE
+        isiklar = "".join(
+            f'<circle cx="{x}" cy="2.2" r="1.4" fill="{"#ffd27a" if i % 2 else "#58d5ff"}" opacity="0.3">'
+            f'<animate attributeName="opacity" values="0.25;1;0.25" dur="1.05s" begin="-{i * 0.15:.2f}s" repeatCount="indefinite"/></circle>'
+            for i, x in enumerate(range(-21, 22, 7)))
+        tara = [(33.5, 10), (35.3, 130, DUZ), (35.35, 10, DUZ), (37.2, 130, DUZ)]
+        self.ekle(f'''<g opacity="0">{gorun([(30.9, 0), (31.1, 1), (50.2, 1), (50.5, 0)])}
+<g>{tasi([(31, "150 -50"), (33, "150 64"), (38, "150 64"), (39.4, "350 84", "0.4 0 1 1"), (41, f"{dx} {dy}", "0 0 0.4 1"),
+          (49.6, f"{dx} {dy}"), (50.4, "1010 150", "0.6 0 1 1")])}
+ <g>{dondur([(48.4, 0), (48.7, -9), (49, 8), (49.3, -5), (49.6, 0)])}
+ <g>{olcekle([(49.6, "1 1"), (50.4, "0.25 0.25", "0.6 0 1 1")])}
+ <g>{sallan(-2.5, 2.6)}
+  <g opacity="0">{gorun([(33.1, 0), (33.5, 0.9), (35.3, 0.6), (35.9, 0.9), (37.2, 0.9), (37.7, 0)])}
+    <path d="M-10,6 L10,6 L78,132 L-78,132 Z" fill="url(#cekim)"/>
+    <g clip-path="url(#koni)"><rect x="-80" y="10" width="160" height="2.2" fill="#e6fff5" opacity="0.85">{degistir("y", tara)}</rect></g>
+  </g>
+  <ellipse cy="5.5" rx="16" ry="4" fill="#34e0a1" opacity="0.35" filter="url(#isik)"/>
+  <path d="M-11,-4 A11,10 0 0,1 11,-4 Z" fill="url(#kubbe)"/>
+  <circle cx="0" cy="-8.2" r="2.6" fill="#34e0a1"/><circle cx="-0.9" cy="-8.6" r="0.55" fill="#05130d"/><circle cx="0.9" cy="-8.6" r="0.55" fill="#05130d"/>
+  <ellipse rx="27" ry="7.5" fill="url(#metal)"/>
+  <ellipse cy="1.2" rx="26" ry="3" fill="none" stroke="#5d6573" stroke-width="0.8"/>
+  {isiklar}
+ </g></g></g>
+</g></g>''')
+
+    def avci(self) -> None:
+        """Dört kanatlı avcı: soldan süzülür, selamlaşmadan sonra burnunu Kuzey Yıldızı'na çevirip ışık hızına atlar."""
+        ax, ay = self.AVCI
+        aci = math.degrees(math.atan2(KUTUP[1] - ay, KUTUP[0] - ax))
+        self.ekle(f'''<g opacity="0">{gorun([(38.4, 0), (38.6, 1), (47.7, 1), (47.85, 0)])}
+<g>{tasi([(38.5, "-70 264"), (41.5, f"{ax} {ay}", "0.2 0.6 0.4 1")])}
+ <g>{dondur([(46.0, 0), (46.9, f"{aci:.1f}")])}
+ <g>{tasi([(47.25, "0 0"), (47.8, "950 0", "0.8 0 1 1")])}
+ <g>{olcekle([(47.1, "1 1"), (47.3, "2.6 0.55")])}
+ <g>{sallan(1.5, 3.1)}
+  <ellipse cx="-18" rx="6" ry="4.5" fill="#ff7a59" opacity="0.55" filter="url(#isik)">
+    {degistir("rx", [(46.3, 6), (47.2, 15)])}<animate attributeName="ry" values="4.5;5.5;4.5" dur="0.3s" repeatCount="indefinite"/></ellipse>
+  <path d="M-12,-2 L-6,-2 L-2,-13 L-10,-13 Z M-12,2 L-6,2 L-2,13 L-10,13 Z" fill="#9aa1ae"/>
+  <rect x="-11" y="-14" width="20" height="1.2" fill="#7f8796"/><rect x="-11" y="12.8" width="20" height="1.2" fill="#7f8796"/>
+  <path d="M-16,-3 L6,-2.6 L24,-0.8 L25,0 L24,0.8 L6,2.6 L-16,3 Z" fill="url(#metal)"/>
+  <path d="M10,-2.2 L13,-1.9 L13,1.9 L10,2.2 Z" fill="#e2483d"/>
+  <path d="M-2,-2.9 L5,-2.5 L3,-1.1 L-2,-1.1 Z" fill="#1b2433"/>
+  <path d="M-13,-2 L-5,-2 L1,-17 L-9,-17 Z M-13,2 L-5,2 L1,17 L-9,17 Z" fill="#e6e9ef"/>
+  <path d="M-10.4,-7 L-3.4,-7 L-2.6,-9 L-9.8,-9 Z M-10.4,7 L-3.4,7 L-2.6,9 L-9.8,9 Z" fill="#e2483d"/>
+  <rect x="-10" y="-18" width="24" height="1.3" fill="#c9ced8"/><rect x="-10" y="16.7" width="24" height="1.3" fill="#c9ced8"/>
+  <circle cx="-16" cy="-1.6" r="1.5" fill="#ffb199"/><circle cx="-16" cy="1.6" r="1.5" fill="#ffb199"/>
+ </g></g></g></g>
+</g></g>''')
+        # ışık hızı: yıldızlar avcının gidiş yönünde çizgiye uzar, kalkış noktasında parlama ve şok halkası
+        r = random.Random(TOHUM + 7)
+        cizgiler = []
+        for _ in range(26):
+            yy, x0, L = r.uniform(-36, 36), r.uniform(-70, 40), r.uniform(70, 240)
+            cizgiler.append(f'<line x1="{f(x0)}" y1="{f(yy)}" x2="{f(x0)}" y2="{f(yy)}" stroke-width="{r.uniform(0.5, 1.3):.1f}">'
+                            + degistir("x2", [(47.2, f(x0)), (47.65, f(x0 + L), "0.6 0 1 1"), (48.4, f(x0 + L)), (48.5, f(x0), DUZ)]) + "</line>")
+        self.ekle(f'<g transform="translate({ax} {ay}) rotate({aci:.1f})" stroke="#dbeaff" stroke-linecap="round" opacity="0">'
+                  + gorun([(47.15, 0), (47.3, 0.9), (47.75, 0.9), (48.3, 0)]) + "".join(cizgiler) + "</g>")
+        self.ekle(f'<circle cx="{ax}" cy="{ay}" r="2" fill="url(#parlama)" opacity="0">'
+                  + degistir("r", [(47.25, 2), (47.6, 34, "0.2 0.6 0.4 1")]) + gorun([(47.2, 0), (47.3, 1), (47.9, 0)]) + "</circle>")
+        self.ekle(f'<circle cx="{ax}" cy="{ay}" r="4" fill="none" stroke="#cfe6ff" stroke-width="1.2" opacity="0">'
+                  + degistir("r", [(47.3, 4), (48.1, 64, "0.2 0.6 0.4 1")]) + gorun([(47.28, 0), (47.35, 0.6), (48.1, 0)]) + "</circle>")
+
+    def selamlasma(self) -> None:
+        """Avcı üç ışık atar, uçan daire halkalarla cevap verir ve avcıya yeşil bir küre fırlatır."""
+        (ax, ay), (dx, dy) = self.AVCI, self.DAIRE
+        for i in range(3):
+            t = 41.6 + 0.42 * i
+            self.ekle(f'<circle cx="{ax + 25}" cy="{ay}" r="2.2" fill="#ffd27a" filter="url(#isik)" opacity="0">'
+                      + degistir("cx", [(t, ax + 25), (t + 0.55, dx - 27, DUZ)]) + degistir("cy", [(t, ay), (t + 0.55, dy + 2, DUZ)])
+                      + gorun([(t - 0.02, 0), (t, 1), (t + 0.5, 1), (t + 0.56, 0)]) + "</circle>")
+        for i in range(3):
+            t = 43.2 + 0.4 * i
+            self.ekle(f'<circle cx="{dx}" cy="{dy}" r="4" fill="none" stroke="#34e0a1" stroke-width="1.5" opacity="0">'
+                      + degistir("r", [(t, 4), (t + 0.9, 38, "0.2 0.6 0.4 1")]) + gorun([(t - 0.02, 0), (t, 0.9), (t + 0.9, 0)]) + "</circle>")
+        self.ekle(f'<g opacity="0">' + gorun([(44.5, 0), (44.6, 1), (45.95, 1), (46.05, 0)])
+                  + f'<animateMotion path="M{dx},{dy + 6} Q{(ax + dx) / 2},{dy - 40} {ax + 22},{ay}" dur="{DONGU:g}s" repeatCount="indefinite" '
+                  f'calcMode="linear" keyPoints="0;0;1;1" keyTimes="0;{44.6 / DONGU:.5f};{46 / DONGU:.5f};1"/>'
+                  '<circle r="7" fill="url(#parlama)" opacity="0.6"/><circle r="2.8" fill="#34e0a1" filter="url(#isik)"/></g>')
+        self.ekle(f'<circle cx="{ax + 6}" cy="{ay}" r="3" fill="url(#parlama)" opacity="0">'
+                  + degistir("r", [(46, 3), (46.5, 20)]) + gorun([(45.98, 0), (46.02, 0.8), (46.5, 0)]) + "</circle>")
 
     # ---------- ışık oyunları ----------
     def isik_oyunlari(self) -> None:
@@ -330,17 +530,21 @@ class Sahne:
         self.ekle('<ellipse cx="160" cy="160" rx="190" ry="70" fill="url(#yaziGolge)"/>',
                   '<g font-family="\'Segoe UI\',Ubuntu,\'Helvetica Neue\',Arial,sans-serif">'
                   '<text x="48" y="152" font-size="42" font-weight="800" fill="#f5f7ff" letter-spacing="0.5">Kuzey Labs</text>'
-                  '<text x="50" y="184" font-size="15" font-weight="600" fill="#7fb4ff">kuzeylabs.com</text></g>')
+                  '<text x="50" y="184" font-size="15" font-weight="600" fill="#7fb4ff">kuzeylabs.com</text>'
+                  '<text x="48" y="152" font-size="42" font-weight="800" fill="#7dffcf" letter-spacing="0.5" opacity="0" filter="url(#isik)">'
+                  + gorun([(33.6, 0), (34.4, 0.6), (35.3, 0.15), (36.2, 0.6), (37.5, 0)]) + 'Kuzey Labs</text>'
+                  '<text x="50" y="104" font-size="11.5" font-style="italic" fill="#4bd5ee" letter-spacing="0.6" opacity="0">'
+                  + gorun([(38.3, 0), (38.9, 1), (42.2, 1), (43, 0)]) + 'Çok çok uzak bir galakside…</text></g>')
 
     def yaz(self, yol: Path) -> int:
         self.ekle(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
-                  'aria-label="Kuzey Labs: Samanyolu boyunca Kuzey Yıldızı\'na uzanan takımyıldız, yörüngede bir gezegen ve takla atan bir roket.">',
+                  'aria-label="Kuzey Labs: Samanyolu, Kuzey Yıldızı\'nı gösteren Büyük Ayı, geçen bir roket ve Apollo, ışıkla selamlaşan bir uçan daire ile bir avcı.">',
                   '<!-- uzay_uret.py ile yordamsal üretildi; elle düzenlenmez -->',
                   f'<clipPath id="kose"><rect width="{W}" height="{H}" rx="16"/></clipPath>')
         self.tanimlar()
         self.ekle('<g clip-path="url(#kose)">')
         self.zemin(); self.samanyolu(); self.parlaklar(); self.uydu_izi(); self.takimyildiz()
-        self.gezegen(); self.kayan_yildizlar(); self.roket(); self.isik_oyunlari(); self.yazi()
+        self.kayan_yildizlar(); self.roket(); self.olaylar(); self.isik_oyunlari(); self.yazi()
         self.ekle("</g>", f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="16" fill="none" stroke="#30363d"/>', "</svg>")
         metin = "\n".join(self.parca)
         yol.write_text(metin, encoding="utf-8")
