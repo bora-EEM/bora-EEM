@@ -33,7 +33,7 @@ Ben Bora. Bursa Uludağ Üniversitesi'nde elektrik-elektronik mühendisliği oku
 </table>
 
 <p align="center">
-  <a href="https://kuzeylabs.com"><img src="./gorseller/kuzey-uzay.svg" width="100%" alt="Kuzey Labs: uzayda Kuzey Yıldızı'na uzanan takımyıldız, yörüngede gezegenler ve takla atan bir roket."></a>
+  <a href="https://kuzeylabs.com"><img src="./gorseller/kuzey-uzay.svg" width="100%" alt="Kuzey Labs: Samanyolu, Kuzey Yıldızı'nı gösteren Büyük Ayı, geçen bir roket ve Apollo, ışıkla selamlaşan bir uçan daire ile bir avcı."></a>
 </p>
 
 ## Kuzey Labs'e katılmak isterseniz
