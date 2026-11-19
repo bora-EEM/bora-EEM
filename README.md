@@ -20,35 +20,25 @@ Ben Bora. Bursa Uludağ Üniversitesi'nde elektrik-elektronik mühendisliği oku
     <td width="50%" valign="top">
       <sub>01 / HAFIZA</sub>
       <h3><a href="https://github.com/bora-EEM/ikinci-beyin-sablon">İkinci Beyin</a></h3>
-      <p>Terminalde çalışan yapay zekanız her sohbette sizi sıfırdan tanımasın. Düz Markdown dosyalarından kurulu bir hafıza klasörü.</p>
+      <p>Yapay zekânız her sohbette sizi sıfırdan tanımasın.</p>
       <p><a href="https://github.com/bora-EEM/ikinci-beyin-sablon"><b>Kendi beyninizi kurun →</b></a></p>
     </td>
     <td width="50%" valign="top">
       <sub>02 / İKİZ</sub>
       <h3><a href="https://github.com/bora-EEM/dijital-ikiz">Dijital ikiz</a></h3>
-      <p>Size sorulanları sizin ağzınızdan ve yalnız onayladığınız bilgiyle cevaplayan bir ikizin açık kodu: sayfa, ara sunucu, güvenlik önlemleri ve sınav.</p>
+      <p>Size sorulanları onayladığınız bilgiyle cevaplayan ikizin açık kodu.</p>
       <p><a href="https://github.com/bora-EEM/dijital-ikiz"><b>Kodu inceleyin →</b></a></p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <sub>03 / ÖĞRENME</sub>
-      <h3><a href="https://github.com/bora-EEM/veri_bilimi">Makine öğrenmesine giriş</a></h3>
-      <p>Modeller, veri ön işleme, model eğitimi ve hata ölçüleri; hiç bilmeyen birinin anlayacağı dille, çalıştırılabilir defterlerle.</p>
-      <p><a href="https://github.com/bora-EEM/veri_bilimi"><b>Notları okuyun →</b></a></p>
-    </td>
-    <td width="50%" valign="top">
-      <sub>04 / UYGULAMA</sub>
-      <h3><a href="https://github.com/bora-EEM/yzt_hafta1">Veri analizi örnekleri</a></h3>
-      <p>Bir e-ticaret satış verisinin Pandas ve Matplotlib ile baştan sona analizi ve iki örnek daha; kendi bilgisayarınızda çalıştırabilirsiniz.</p>
-      <p><a href="https://github.com/bora-EEM/yzt_hafta1"><b>Örnekleri açın →</b></a></p>
     </td>
   </tr>
 </table>
 
+<p align="center">
+  <a href="https://kuzeylabs.com"><img src="./gorseller/kuzey-uzay.svg" width="100%" alt="Kuzey Labs: uzayda Kuzey Yıldızı'na uzanan takımyıldız, yörüngede gezegenler ve takla atan bir roket."></a>
+</p>
+
 ## Kuzey Labs'e katılmak isterseniz
 
-Ekipte tasarım, kod, test, çeviri ya da tanıtımla yer almak isterseniz [Aramıza katıl](https://kuzeylabs.com/#katil) formunu doldurun. Uygulamalarımızı herkesten önce denemek isterseniz [deneme ekibine](https://kuzeylabs.com/#deneme) yazılın. İş, proje, tanıtım ya da başka bir destek teklifi için [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
+Ekibe katılmak için [Aramıza katıl](https://kuzeylabs.com/#katil), uygulamaları herkesten önce denemek için [deneme ekibi](https://kuzeylabs.com/#deneme). Gerisi için [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
 
 <details>
 <summary><b>English</b></summary>
