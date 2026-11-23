@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://bora-eem.github.io/dijital-ikiz/"><b>Dijital ikizim</b></a> &nbsp; / &nbsp;
-  <a href="https://kuzeylabs.com"><b>Kuzey Labs</b></a> &nbsp; / &nbsp;
+  <a href="https://kuzeylabs.com/github"><b>Kuzey Labs</b></a> &nbsp; / &nbsp;
   <a href="https://www.kaggle.com/bora04"><b>Kaggle</b></a> &nbsp; / &nbsp;
   <a href="https://www.linkedin.com/in/bora-koruyucu-558a09260/"><b>LinkedIn</b></a>
 </p>
@@ -33,12 +33,12 @@ Ben Bora. Bursa Uludağ Üniversitesi'nde elektrik-elektronik mühendisliği oku
 </table>
 
 <p align="center">
-  <a href="https://kuzeylabs.com"><img src="./gorseller/kuzey-uzay.svg" width="100%" alt="Kuzey Labs: Samanyolu, Kuzey Yıldızı'nı gösteren Büyük Ayı, geçen bir roket ve Apollo, ışıkla selamlaşan bir uçan daire ile bir avcı."></a>
+  <a href="https://kuzeylabs.com/github"><img src="./gorseller/kuzey-uzay.svg" width="100%" alt="Kuzey Labs: Samanyolu, Kuzey Yıldızı'nı gösteren Büyük Ayı, geçen bir roket ve Apollo, ışıkla selamlaşan bir uçan daire ile bir avcı."></a>
 </p>
 
 ## Kuzey Labs'e katılmak isterseniz
 
-Ekibe katılmak için [Aramıza katıl](https://kuzeylabs.com/#katil), uygulamaları herkesten önce denemek için [deneme ekibi](https://kuzeylabs.com/#deneme). Gerisi için [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
+Ekibe katılmak için [Aramıza katıl](https://kuzeylabs.com/?utm_source=github#katil), uygulamaları herkesten önce denemek için [deneme ekibi](https://kuzeylabs.com/?utm_source=github#deneme). Gerisi için [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
 
 <details>
 <summary><b>English</b></summary>
@@ -46,7 +46,7 @@ Ekibe katılmak için [Aramıza katıl](https://kuzeylabs.com/#katil), uygulamal
 
 I'm Bora, an electrical and electronics engineering student at Bursa Uludağ University. I founded Kuzey Labs, where we build small apps that are useful every day.
 
-To join Kuzey Labs or test our apps early, use the forms on [kuzeylabs.com](https://kuzeylabs.com/#katil). For work, projects or promotion: [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
+To join Kuzey Labs or test our apps early, use the forms on [kuzeylabs.com](https://kuzeylabs.com/?utm_source=github#katil). For work, projects or promotion: [info@kuzeylabs.com](mailto:info@kuzeylabs.com).
 
 </details>
 
