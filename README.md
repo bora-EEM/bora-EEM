@@ -33,7 +33,7 @@ Ben Bora. Bursa Uludağ Üniversitesi'nde elektrik-elektronik mühendisliği oku
 </table>
 
 <p align="center">
-  <a href="https://kuzeylabs.com/github"><img src="./gorseller/kuzey-uzay.svg" width="100%" alt="Kuzey Labs: Samanyolu, Kuzey Yıldızı'nı gösteren Büyük Ayı, geçen bir roket ve Apollo, ışıkla selamlaşan bir uçan daire ile bir avcı."></a>
+  <a href="https://kuzeylabs.com/github"><img src="https://kuzeylabs.com/github/uzay.svg" width="100%" alt="Kuzey Labs: Samanyolu ve Büyük Ayı altında her açılışta farklı sırayla gelen on dört uzay anı; Sputnik, Apollo 11, Voyager'ın ve Hubble'ın gerçek fotoğrafları, Starman, Starship, Halley, 2001 monoliti, Major Tom, Türksat 6A, Project Hail Mary, Interstellar ve ışık hızından çıkan bir yük gemisi."></a>
 </p>
 
 ## Kuzey Labs'e katılmak isterseniz
