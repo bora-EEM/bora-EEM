@@ -38,8 +38,9 @@ DUZ = "0 0 1 1"                   # sabit hız
 YEDEK_TOHUM = 7                   # yedek dosyanın sabit sırası
 ARA = (2.0, 5.0)                  # iki anomali arasındaki bekleme, saniye
 YER_TUTUCU = "__BASLA__"
-ETIKET = ('font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="9" font-weight="700" '
-          'letter-spacing="1.1" fill="#c3d0ee" stroke="#090816" stroke-width="2.2" stroke-opacity="0.65" paint-order="stroke"')
+ETIKET = ('font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="20" font-weight="700" '
+          'letter-spacing="0.4" fill="#dce4f8" stroke="#090816" stroke-width="4" stroke-opacity="0.72" paint-order="stroke"')
+ALT = 15                          # ikinci satırın yazı boyu (telefonda resim yaklaşık 0,4 kata iner: 20 -> 8 px)
 
 # Yıldız renkleri: tayf sınıfına göre yaklaşık kara cisim rengi ve gökyüzündeki payı
 TAYF = [("#9bb0ff", 0.06), ("#aabfff", 0.10), ("#cad7ff", 0.16), ("#f8f7ff", 0.30),
@@ -163,19 +164,24 @@ def foto_karti(dosya: str, baslik: str, kaynak: str, merkez: tuple, cikis: tuple
     m, c, d = (f"{f(x)} {f(y)}" for x, y in (merkez, cikis, donus))
     return (f'<g opacity="0">{gorun([(t0, 0), (t0 + 0.25, 1), (t3 - 0.25, 1), (t3, 0)])}'
             f'<g>{tasi([(t0, c), (t1, m, ac), (t2, m, DUZ), (t3, d, kapa)])}'
-            f'<g>{olcekle([(t0, "0.04 0.04"), (t1, "1 1", ac), (t2, "1 1", DUZ), (t3, "0.04 0.04", kapa)])}\n'
-            f'  <rect x="-82" y="-88" width="164" height="180" rx="4" fill="#070914" fill-opacity="0.93" stroke="#9fb0d6" stroke-width="0.6" stroke-opacity="0.75"/>\n'
+            f'<g>{olcekle([(t0, "0.04 0.04"), (t1, "1.3 1.3", ac), (t2, "1.3 1.3", DUZ), (t3, "0.04 0.04", kapa)])}\n'
+            f'  <rect x="-82" y="-88" width="164" height="184" rx="4" fill="#070914" fill-opacity="0.93" stroke="#9fb0d6" stroke-width="0.6" stroke-opacity="0.75"/>\n'
             f'  <image x="-70" y="-80" width="140" height="140" href="data:image/jpeg;base64,{veri}"/>\n'
             f'  <rect x="-70" y="-80" width="140" height="140" fill="none" stroke="#dbe7ff" stroke-width="0.4" stroke-opacity="0.45"/>{ek}\n'
-            f'  <text y="74" {KART_YAZI} font-size="7" font-weight="700" letter-spacing="0.4" fill="#dbe4ff">{baslik}</text>\n'
-            f'  <text y="84" {KART_YAZI} font-size="5.5" fill="#8f9cc0">{kaynak}</text>\n'
+            f'  <text y="76" {KART_YAZI} font-size="13" font-weight="700" letter-spacing="0.2" fill="#e3eaff">{baslik}</text>\n'
+            f'  <text y="89" {KART_YAZI} font-size="10" fill="#a9b6da">{kaynak}</text>\n'
             f'</g></g></g>')
 
 
-def etiket(metin: str, x: float = 0, y: float = 0, hiza: str = "middle", boyut: float | None = None, renk: str | None = None) -> str:
-    stil = ETIKET if boyut is None else ETIKET.replace('font-size="9"', f'font-size="{boyut:g}"')
+def etiket(metin: str, x: float = 0, y: float = 0, hiza: str = "middle", boyut: float | None = None, renk: str | None = None,
+           alt: str | None = None) -> str:
+    """Anın adı; alt verilirse altına daha küçük, sönük ikinci satır (uzun adı iki satıra bölmek için)."""
+    if alt:
+        return (etiket(metin, x, y, hiza, boyut, renk)
+                + etiket(alt, x, y + (boyut or 20) * 0.5 + ALT * 0.85, hiza, ALT, "#b4c1e4").replace('font-weight="700"', 'font-weight="600"'))
+    stil = ETIKET if boyut is None else ETIKET.replace('font-size="20"', f'font-size="{boyut:g}"')
     if renk:
-        stil = stil.replace('fill="#c3d0ee"', f'fill="{renk}"')
+        stil = stil.replace('fill="#d3ddf5"', f'fill="{renk}"')
     return f'<text x="{f(x)}" y="{f(y)}" text-anchor="{hiza}" {stil}>{metin}</text>'
 
 
@@ -242,9 +248,13 @@ class Sahne:
     def __init__(self) -> None:
         self.r = random.Random(TOHUM)
         self.parca: list[str] = []
+        self.durgun: list[str] = []   # hiç kıpırdamayan katmanlar: bir kez resme pişirilir (resme_pisir)
 
     def ekle(self, *satirlar: str) -> None:
         self.parca.extend(satirlar)
+
+    def durgun_ekle(self, *satirlar: str) -> None:
+        self.durgun.extend(satirlar)
 
     # ---------- tanımlar ----------
     def tanimlar(self) -> None:
@@ -344,9 +354,12 @@ class Sahne:
 
     # ---------- 1. zemin ve paralaks yıldızlar ----------
     def zemin(self) -> None:
-        self.ekle(f'<rect width="{W}" height="{H}" fill="url(#zemin)"/>',
-                  f'<rect width="{W}" height="{H}" filter="url(#yildizTozu)" opacity="0.75"/>')
-        for katman, (adet, hiz, en_buyuk) in enumerate([(620, 160, 0.85), (260, 90, 1.25), (45, 60, 1.7)]):
+        self.ekle(ARKA_YER)
+        self.durgun_ekle(f'<rect width="{W}" height="{H}" fill="url(#zemin)"/>',
+                         f'<rect width="{W}" height="{H}" filter="url(#yildizTozu)" opacity="0.75"/>')
+        # uzak katman durur (arka plan resminde); orta ve yakın katman saydam birer resim olarak kayar:
+        # her karede yüzlerce daire yerine tek resim çizilir
+        for katman, (adet, hiz, en_buyuk) in enumerate([(620, None, 0.85), (260, 90, 1.25), (45, 60, 1.7)]):
             daireler = []
             for _ in range(adet):
                 x, y = self.r.uniform(0, W), self.r.uniform(0, H)
@@ -354,9 +367,15 @@ class Sahne:
                 op = 0.25 + 0.6 * self.r.random()
                 daireler.append(f'<circle cx="{f(x)}" cy="{f(y)}" r="{f(rr)}" fill="{tayf_sec(self.r)}" opacity="{op:.2f}"/>')
             govde = "".join(daireler)
+            if hiz is None:
+                self.durgun_ekle(f"<g>{govde}</g>")
+                continue
             # aynı yıldız alanı iki kez, yan yana: sola kaydıkça dikişsiz döner
-            self.ekle(f'<g><animateTransform attributeName="transform" type="translate" from="0 0" to="-{W} 0" '
-                      f'dur="{hiz}s" repeatCount="indefinite"/><g>{govde}</g><g transform="translate({W} 0)">{govde}</g></g>')
+            uri = resme_pisir(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">{govde}</svg>',
+                              FOTO / f"yildiz-katmani-{katman}.png")
+            self.ekle(f'<defs><image id="yk{katman}" width="{W}" height="{H}" href="{uri}"/></defs>'
+                      f'<g><animateTransform attributeName="transform" type="translate" from="0 0" to="-{W} 0" '
+                      f'dur="{hiz}s" repeatCount="indefinite"/><use href="#yk{katman}"/><use href="#yk{katman}" x="{W}"/></g>')
         # göz kırpan yıldızlar
         for _ in range(26):
             x, y = self.r.uniform(0, W), self.r.uniform(0, H)
@@ -367,10 +386,10 @@ class Sahne:
     # ---------- 2. Samanyolu ----------
     def samanyolu(self) -> None:
         cx, cy = BANT_MERKEZ
-        self.ekle(f'<g transform="rotate({BANT_ACI:.2f} {cx} {cy})">')
-        self.ekle(
-            f'<ellipse cx="{cx}" cy="{cy}" rx="620" ry="86" fill="#5b4f8f" opacity="0.5" filter="url(#pus)">'
-            '<animate attributeName="opacity" values="0.42;0.58;0.42" dur="10s" repeatCount="indefinite"/></ellipse>',
+        ekle = self.durgun_ekle          # Samanyolu kıpırdamaz: bütünü arka plan resmine pişer
+        ekle(f'<g transform="rotate({BANT_ACI:.2f} {cx} {cy})">')
+        ekle(
+            f'<ellipse cx="{cx}" cy="{cy}" rx="620" ry="86" fill="#5b4f8f" opacity="0.5" filter="url(#pus)"/>',
             f'<ellipse cx="{cx + 40}" cy="{cy}" rx="460" ry="40" fill="#a99bd6" opacity="0.26" filter="url(#pus2)"/>',
             f'<ellipse cx="{cx + 90}" cy="{cy - 2}" rx="160" ry="24" fill="#efe2d2" opacity="0.22" filter="url(#pus2)"/>',
             f'<rect x="-200" y="20" width="1300" height="260" filter="url(#bulutsu)" mask="url(#bant)" opacity="0.8"/>',
@@ -387,14 +406,14 @@ class Sahne:
             y = cy + self.r.gauss(0, 16 + 10 * (1 - yogun))
             rr = parlaklik(self.r, 0.3, 1.25, 3.2)
             yildizlar.append(f'<circle cx="{f(x)}" cy="{f(y)}" r="{f(rr)}" fill="{tayf_sec(self.r)}" opacity="{0.35 + 0.6 * self.r.random():.2f}"/>')
-        self.ekle("<g>" + "".join(yildizlar) + "</g>")
-        self.ekle('<rect x="-200" y="20" width="1300" height="260" filter="url(#yildizTozu2)" mask="url(#bant)"/>')
+        ekle("<g>" + "".join(yildizlar) + "</g>")
+        ekle('<rect x="-200" y="20" width="1300" height="260" filter="url(#yildizTozu2)" mask="url(#bant)"/>')
         # koyu toz yarıkları en üstte: yıldızların bir kısmını örter, derinlik verir
-        self.ekle(f'<rect x="-200" y="20" width="1300" height="260" filter="url(#toz)" mask="url(#cekirdek)" opacity="0.8"/>',
+        ekle(f'<rect x="-200" y="20" width="1300" height="260" filter="url(#toz)" mask="url(#cekirdek)" opacity="0.8"/>',
                   f'<rect x="-200" y="20" width="1300" height="260" filter="url(#tozInce)" mask="url(#cekirdek)" opacity="0.5"/>')
         # yarıkların arasından sızan ışık: tozun önünde sönük, sıcak bir parıltı
-        self.ekle(f'<ellipse cx="{cx + 90}" cy="{cy}" rx="230" ry="14" fill="#f4e7da" opacity="0.13" filter="url(#pus2)"/>')
-        self.ekle("</g>")
+        ekle(f'<ellipse cx="{cx + 90}" cy="{cy}" rx="230" ry="14" fill="#f4e7da" opacity="0.13" filter="url(#pus2)"/>')
+        ekle("</g>")
 
     # ---------- 3. kırınım çivili parlak yıldızlar ----------
     def parlaklar(self) -> None:
@@ -433,14 +452,15 @@ class Sahne:
         self.ekle('<g opacity="0.5">' + parla)
         for ad, r in zip(("dubhe", "merak", "phecda", "megrez", "alioth", "mizar", "alkaid"), (2.4, 2.1, 2.0, 1.6, 2.2, 2.1, 2.1)):
             x, yy = yer[ad]
-            self.ekle(f'<circle cx="{f(x)}" cy="{f(yy)}" r="{r}" fill="#f4f7ff" filter="url(#isik)"/>')
+            self.ekle(f'<circle cx="{f(x)}" cy="{f(yy)}" r="{f(r * 3.2)}" fill="url(#hale)"/>'
+                      f'<circle cx="{f(x)}" cy="{f(yy)}" r="{r}" fill="#f4f7ff"/>')
         mizar = yer["mizar"]
         self.ekle(f'<circle cx="{f(mizar[0] + 3.4)}" cy="{f(mizar[1] - 3.6)}" r="0.8" fill="#dfe8ff"/></g>')
 
         # Kuzey Yıldızı: tek başına sönük bir yıldız; göstergeleri yalnız Büyük Ayı ona uzandığında yanar
         altigen = " ".join(f"{f(58 * math.cos(math.radians(60 * i - 90)))},{f(58 * math.sin(math.radians(60 * i - 90)))}" for i in range(6))
         self.ekle(f'''<g transform="translate({kx} {ky})">
-  <circle r="5" fill="url(#cekirdekIsik)" opacity="0.6"/><circle r="1.7" fill="#fff" filter="url(#isik)" opacity="0.85"/>
+  <circle r="5" fill="url(#cekirdekIsik)" opacity="0.6"/><circle r="5.4" fill="url(#hale)" opacity="0.85"/><circle r="1.7" fill="#fff" opacity="0.85"/>
   <g opacity="0.1">{yan}
   <g opacity="0.75"><polygon points="{altigen}" fill="none" stroke="url(#galxe)" stroke-width="1.2"/>
     <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="48s" repeatCount="indefinite"/></g>
@@ -449,12 +469,12 @@ class Sahne:
   <g opacity="0.6"><circle r="33" fill="none" stroke="#34e0a1" stroke-width="3" stroke-dasharray="0.8 4.4"/>
     <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="36s" repeatCount="indefinite"/></g>
   <circle r="26" fill="url(#cekirdekIsik)" opacity="0.8"><animate attributeName="r" values="22;30;22" dur="3.2s" repeatCount="indefinite"/></circle>
-  <g filter="url(#isik)"><path d="M0,-19 L2.6,-2.6 L19,0 L2.6,2.6 L0,19 L-2.6,2.6 L-19,0 L-2.6,-2.6 Z" fill="#fff"/>
+  <g><path d="M0,-19 L2.6,-2.6 L19,0 L2.6,2.6 L0,19 L-2.6,2.6 L-19,0 L-2.6,-2.6 Z" fill="#fff"/>
     <path d="M0,-9 L1.2,-1.2 L9,0 L1.2,1.2 L0,9 L-1.2,1.2 L-9,0 L-1.2,-1.2 Z" fill="#fff" transform="rotate(45)"/>
     <animateTransform attributeName="transform" type="rotate" values="0;12;0" dur="7s" repeatCount="indefinite"/></g>
-  <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="9.5" font-weight="700" fill="#c9d8ff">
-    <text y="76" text-anchor="middle" letter-spacing="1.2">KUZEY YILDIZI</text>
-    <text y="88" text-anchor="middle" font-weight="600" fill="#9fb0d6">yaklaşık 430 ışık yılı</text></g>
+  <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="18" font-weight="700" fill="#dce4f8" stroke="#090816" stroke-width="3.8" stroke-opacity="0.7" paint-order="stroke">
+    <text y="82" text-anchor="middle" letter-spacing="0.4">KUZEY YILDIZI</text>
+    <text y="101" text-anchor="middle" font-size="14" font-weight="600" fill="#aebbe0">yaklaşık 430 ışık yılı</text></g>
   </g>
 </g>''')
 
@@ -493,7 +513,7 @@ class Sahne:
             for s in yildizlar:
                 x, y = yer[s[0]]
                 r = max(0.7, 1.75 - 0.21 * s[3])
-                self.ekle(f'<circle cx="{f(x)}" cy="{f(y)}" r="{f(r)}" fill="{s[4]}" opacity="0.9"/>')
+                self.durgun_ekle(f'<circle cx="{f(x)}" cy="{f(y)}" r="{f(r)}" fill="{s[4]}" opacity="0.9"/>')
             yol = []
             for a, b in cizgiler:
                 (x1, y1), (x2, y2) = yer[a], yer[b]
@@ -509,7 +529,7 @@ class Sahne:
                       f'keyTimes="0;{a:.4f};{a + 0.9 / donem:.4f};{b - 0.9 / donem:.4f};{b:.4f};1" dur="{donem}s" repeatCount="indefinite"/>'
                       f'<path d="{" ".join(yol)}" stroke="#b7c6ee" stroke-width="0.6" stroke-opacity="0.25" fill="none"/>'
                       f'<text x="{f(ex)}" y="{f(ey)}" text-anchor="{hiza}" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" '
-                      f'font-size="7.5" letter-spacing="1" fill="#9fb0d6" opacity="0.5">{etiket_metni}</text></g>')
+                      f'font-size="13" letter-spacing="0.8" fill="#aebbe0" opacity="0.6">{etiket_metni}</text></g>')
 
     # ---------- 5. kayan yıldızlar ----------
     def kayan_yildizlar(self) -> None:
@@ -535,11 +555,12 @@ class Sahne:
         self.ekle(f'<rect width="0" height="0"><animate id="kroket" attributeName="opacity" values="0;0" '
                   f'dur="{ROKET_SURE:g}s" begin="{ROKET_BASLA:g}s" fill="remove"/></rect>')
         # motor izi: aynı yolu biraz geriden izleyen parçacıklar; her biri kendi gecikmesiyle kalkar, kalkana dek görünmez
-        self.ekle('<g filter="url(#duman)">')
+        self.ekle('<g>')
         for k in range(1, 19):
             gecikme = k * 0.045
             rr = 1.6 + k * 0.32
-            renk = "#ffd27a" if k < 5 else ("#ff9b54" if k < 10 else "#8792a6")
+            renk = "url(#izSari)" if k < 5 else ("url(#izTuruncu)" if k < 10 else "url(#izGri)")
+            rr *= 1.6                      # degrade kenarı yumuşattığı için biraz büyük
             op = max(0.05, 0.85 - k * 0.045)
             self.ekle(f'<circle r="{f(rr)}" fill="{renk}" opacity="0"><animate attributeName="opacity" values="{op:.2f};{op:.2f}" '
                       f'dur="{ROKET_SURE:g}s" begin="kroket.begin+{gecikme:.3f}s" fill="remove"/>'
@@ -570,6 +591,10 @@ class Sahne:
     <stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="#cfe6ff" stop-opacity="0.8"/><stop offset="1" stop-color="#58a6ff" stop-opacity="0"/>
   </radialGradient>
   <filter id="yumusak" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="0.35"/></filter>
+  <radialGradient id="hale"><stop offset="0" stop-color="#f4f7ff" stop-opacity="0.75"/><stop offset="0.35" stop-color="#dfe8ff" stop-opacity="0.25"/><stop offset="1" stop-color="#dfe8ff" stop-opacity="0"/></radialGradient>
+  <radialGradient id="izSari"><stop offset="0" stop-color="#ffd27a"/><stop offset="0.5" stop-color="#ffd27a" stop-opacity="0.6"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>
+  <radialGradient id="izTuruncu"><stop offset="0" stop-color="#ff9b54"/><stop offset="0.5" stop-color="#ff9b54" stop-opacity="0.55"/><stop offset="1" stop-color="#ff9b54" stop-opacity="0"/></radialGradient>
+  <radialGradient id="izGri"><stop offset="0" stop-color="#8792a6"/><stop offset="0.5" stop-color="#8792a6" stop-opacity="0.5"/><stop offset="1" stop-color="#8792a6" stop-opacity="0"/></radialGradient>
 </defs>''')
 
     # ================= anomaliler =================
@@ -580,7 +605,10 @@ class Sahne:
         with saat(f"k_{ad}", sure):
             govde = ciz()
         svg = (f'<g id="a_{ad}"><rect width="0" height="0"><animate id="k_{ad}" attributeName="opacity" values="0;0" '
-               f'dur="{sure:g}s" begin="{YER_TUTUCU}" fill="remove"/></rect>\n{govde}\n</g>\n')
+               f'dur="{sure:g}s" begin="{YER_TUTUCU}" fill="remove"/></rect>\n'
+               # gövde yalnız kendi süresince çizilir: saydam ama çizimde duran on dört gövde her kareyi iki kat pahalı yapıyordu
+               f'<g display="none"><set attributeName="display" to="inline" begin="k_{ad}.begin" end="k_{ad}.end"/>\n'
+               f'{govde}\n</g></g>\n')
         assert svg.count(YER_TUTUCU) == 1 and "repeatCount" not in govde, ad
         self.anomaliler.append({"ad": ad, "sure": sure, "svg": svg})
 
@@ -656,9 +684,9 @@ class Sahne:
         dunya = (f'\n  <g opacity="0">{gorun([(8.1, 0), (8.6, 1), (11.3, 1), (11.6, 0)])}'
                  f'<circle cx="0.6" cy="-10" r="5.5" fill="none" stroke="#9fd0ff" stroke-width="0.6"/>'
                  f'<path d="M5,-13.5 L14,-21" stroke="#9fd0ff" stroke-width="0.45"/>'
-                 f'<text x="15.5" y="-21.5" {KART_YAZI.replace("middle", "start")} font-size="6.5" font-weight="700" '
-                 f'fill="#cfe6ff" stroke="#070914" stroke-width="1.6" stroke-opacity="0.7" paint-order="stroke">Dünya</text></g>')
-        kart = foto_karti("voyager-soluk-mavi-nokta.jpg", "DÜNYA, VOYAGER 1'DEN · 1990", "NASA/JPL-Caltech",
+                 f'<text x="15.5" y="-21.5" {KART_YAZI.replace("middle", "start")} font-size="10" font-weight="700" '
+                 f'fill="#cfe6ff" stroke="#070914" stroke-width="2.2" stroke-opacity="0.7" paint-order="stroke">Dünya</text></g>')
+        kart = foto_karti("voyager-soluk-mavi-nokta.jpg", "SOLUK MAVİ NOKTA", "NASA/JPL · 1990",
                           (460, 140), (598, 94), (614, 85), 7.0, 7.9, 11.6, 12.5, dunya)
         rtg = "".join(f'<g transform="translate({f(-12 - 5.2 * i)} {f(10 + 2.6 * i)}) rotate(-26.6)">'
                       f'<rect x="-2.4" y="-1.6" width="4.8" height="3.2" rx="0.6" fill="url(#metal)"/>'
@@ -701,8 +729,8 @@ class Sahne:
     def hubble(self) -> str:
         ax, ay = 515, 236                      # çekim anında açıklığın yeri
         kx, ky = 628, 130                      # fotoğraf kartının ortası (yazının sağında)
-        kart = foto_karti("hubble-ultra-derin-alan.jpg", "HUBBLE ULTRA DERİN ALAN · 2004",
-                          "NASA, ESA, S. Beckwith (STScI), HUDF ekibi", (kx, ky), (ax, ay), (466, 234), 5.1, 5.9, 9.6, 10.4)
+        kart = foto_karti("hubble-ultra-derin-alan.jpg", "ULTRA DERİN ALAN",
+                          "NASA/ESA · 2004", (kx, ky), (ax, ay), (466, 234), 5.1, 5.9, 9.6, 10.4)
         izgara = " ".join(f"M-1,{f(y)} H9" for y in (-39.4, -35.8, -32.2, -28.6, -25, -21.4, -17.8)) + " M4,-43 V-14"
         izgara += " " + " ".join(f"M-1,{f(-y)} H9" for y in (-39.4, -35.8, -32.2, -28.6, -25, -21.4, -17.8)) + " M4,43 V14"
         return f'''<defs>
@@ -756,7 +784,7 @@ class Sahne:
 </defs>
 <g opacity="0">{gorun([(0, 0), (0.3, 1), (13.0, 1), (13.4, 0)])}
 <g>{tasi([(0.2, "-80 88"), (13.3, "960 52", DUZ)])}
- {etiket("STARMAN · FALCON HEAVY · 2018", 0, -30)}
+ <g opacity="0">{gorun([(0.4, 0), (1.0, 1), (8.6, 1), (9.4, 0)])}{etiket("STARMAN · 2018", 40, -4, "start", alt="Falcon Heavy ile fırlatıldı")}</g>
  <g>{dondur([(0.2, 8), (13.3, -190, DUZ)])}<g transform="scale(1.15)">
   <path d="M-6.4,-3.6 L-7,-9.6 Q-6.8,-11.2 -5.2,-11 L-3.8,-3.6 Z" fill="#1d1f24"/>
   <path d="M-5.2,-3.8 C-5.5,-7.5 -4.4,-9.6 -1.8,-9.8 C0.2,-9.9 1,-8 0.8,-6 L0.4,-3.8 Z" fill="#f3f5f8"/>
@@ -816,7 +844,7 @@ class Sahne:
   <circle cx="664" cy="34" r="13" fill="url(#ssKor)" opacity="0.45"/>
   <circle cx="664" cy="34" r="6.5" fill="url(#ssMars)"/>
   <ellipse cx="663.4" cy="28.6" rx="2" ry="0.8" fill="#fff" opacity="0.75"/>
-  {etiket("STARSHIP · MARS YOLUNDA", 676, 37, "start")}
+  {etiket("STARSHIP", 676, 37, "start", alt="Mars yolunda")}
  </g>
  <g>{tasi(itici_yeri)}<g>{dondur(itici_egim)}<g>{dondur(itici_don)}
   <g opacity="0">{gorun(alev_op)}<g transform="translate(0 57)"><g>{olcekle(alev_olcek)}
@@ -873,7 +901,7 @@ class Sahne:
   <circle r="11" fill="url(#hlKoma)"/>
   <circle r="1.7" fill="#fff" filter="url(#isik)"/>
  </g>
- <g opacity="0">{gorun([(2.0, 0), (2.8, 1), (10.0, 1), (11.4, 0)])}{etiket("HALLEY · SON GEÇİŞ 1986 · DÖNÜŞ 2061", -6, 22, "start")}</g>
+ <g opacity="0">{gorun([(2.0, 0), (2.8, 1), (10.0, 1), (11.4, 0)])}{etiket("HALLEY", -6, 30, "start", alt="son geçiş 1986, dönüş 2061")}</g>
 </g></g>'''
 
     # 8. Büyük Ayı birleşir, Kuzey Yıldızı parlar
@@ -1011,7 +1039,7 @@ class Sahne:
  </g></g></g>
 </g></g>'''
         return f'''<g opacity="0">{gorun([(0, 0), (0.1, 1), (14.6, 1), (14.9, 0)])}
- <text x="50" y="104" font-family="'Segoe UI',Ubuntu,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-style="italic" fill="#4bd5ee" letter-spacing="0.6" opacity="0">{gorun([(0.2, 0), (0.9, 1), (2.8, 1), (3.5, 0)])}Çok çok uzak bir galakside…</text>
+ <text x="50" y="104" font-family="'Segoe UI',Ubuntu,'Helvetica Neue',Arial,sans-serif" font-size="19" font-style="italic" fill="#4bd5ee" letter-spacing="0.4" opacity="0">{gorun([(0.2, 0), (0.9, 1), (2.8, 1), (3.5, 0)])}Çok çok uzak bir galakside…</text>
  <rect width="{W}" height="{H}" fill="#05040d" opacity="0">{gorun([(3.0, 0), (3.6, 0.55), (12.8, 0.55), (14.2, 0)])}</rect>
  <g transform="translate({cx} {cy})" stroke="#dbeaff" stroke-linecap="round" opacity="0">{gorun([(3.2, 0), (3.6, 1), (4.8, 1), (5.8, 0.4), (9.4, 0.4), (9.9, 1), (12.8, 1), (13.8, 0)])}{"".join(cizgiler)}</g>
  <circle cx="{vx}" cy="{vy}" r="4" fill="none" stroke="#cfe6ff" stroke-width="1.2" opacity="0">{degistir("r", [(4.6, 4), (5.8, 120, "0.2 0.6 0.4 1")])}{gorun([(4.55, 0), (4.65, 0.7), (5.8, 0)])}</circle>
@@ -1062,7 +1090,7 @@ class Sahne:
   <ellipse cx="0.9" cy="-13.6" rx="3.6" ry="3" fill="url(#mtVizor)"/>
   <path d="M-1.2,-15.2 Q0.6,-16.2 2.4,-15.4" stroke="#fff" stroke-width="0.6" opacity="0.85" fill="none"/>
  </g></g></g>
- <g>{tasi(yazi_yolu)}<g opacity="0">{gorun([(1.5, 0), (2.3, 1), (10.6, 1), (11.4, 0)])}{etiket("MAJOR TOM · SPACE ODDITY · 1969")}</g></g>
+ <g>{tasi(yazi_yolu)}<g opacity="0">{gorun([(1.5, 0), (2.3, 1), (10.6, 1), (11.4, 0)])}{etiket("MAJOR TOM", alt="Space Oddity, 1969")}</g></g>
 </g>'''
 
     # 12. Türksat 6A · 2024
@@ -1093,8 +1121,7 @@ class Sahne:
 <g opacity="0">{gorun([(0, 0), (0.3, 1), (11.6, 1), (12, 0)])}
 <g>{tasi(yol)}
  <g opacity="0">{gorun([(2.0, 0), (2.8, 1), (9.0, 1), (9.8, 0)])}
-  {etiket("TÜRKSAT 6A · 2024", 76, -2, "start")}
-  {etiket("İLK YERLİ HABERLEŞME UYDUMUZ", 76, 9, "start", boyut=7.5, renk="#9fb0d6")}
+  {etiket("TÜRKSAT 6A · 2024", 76, -2, "start", alt="ilk yerli haberleşme uydumuz")}
  </g>
  <g>{dondur([(0, -14), (12, -4, DUZ)])}<g transform="scale(1.1)">
   {halka}
@@ -1214,7 +1241,7 @@ class Sahne:
 
         tau = (f'<g opacity="0">{gorun([(0.2, 0), (1.6, 1), (12.6, 1), (13.6, 0)])}'
                f'<circle cx="826" cy="40" r="16" fill="url(#hmTau)"/><circle cx="826" cy="40" r="2" fill="#fff1cf"/>'
-               f'{etiket("TAU CETI", 826, 60, boyut=6.5, renk="#9fb0d6")}</g>')
+               f'{etiket("TAU CETI", 826, 62, boyut=13, renk="#b4c1e4")}</g>')
         return f'''<defs>
   <linearGradient id="hmBeyaz" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#dfe4ea"/><stop offset="1" stop-color="#848d9b"/>
@@ -1363,12 +1390,13 @@ class Sahne:
             ("kenarMavi", "440,-60;520,-40;440,-60", (330, 90), 17, "0.4;0.75;0.4"),
             ("kenarMor1", "920,330;860,300;920,330", (240, 130), 15, "0.4;0.8;0.4"),
         ]
-        self.ekle(f'<rect width="{W}" height="{H}" fill="url(#vinyet)"/>', '<g style="mix-blend-mode:screen">')
+        self.durgun_ekle(f'<rect width="{W}" height="{H}" fill="url(#vinyet)"/>', '<g style="mix-blend-mode:screen">')
         for degrade, yol, (rx, ry), sure, op in isiklar:
-            x, y = yol.split(";")[0].split(",")
-            self.ekle(f'<ellipse cx="0" cy="0" rx="{rx}" ry="{ry}" fill="url(#{degrade})" transform="translate({x} {y})">'
-                      f'<animateTransform attributeName="transform" type="translate" values="{yol.replace(",", " ")}" dur="{sure}s" repeatCount="indefinite"/>'
-                      f'<animate attributeName="opacity" values="{op}" dur="{sure * 0.7:.1f}s" repeatCount="indefinite"/></ellipse>')
+            (x0, y0), (x1, y1) = (map(float, n.split(",")) for n in yol.split(";")[:2])
+            orta = sum(map(float, op.split(";")[:2])) / 2
+            self.durgun_ekle(f'<ellipse cx="{f((x0 + x1) / 2)}" cy="{f((y0 + y1) / 2)}" rx="{rx}" ry="{ry}" '
+                             f'fill="url(#{degrade})" opacity="{orta:.2f}"/>')
+        self.durgun_ekle("</g>")
         # ışık hüzmesi: eğik, geniş, sönük; 24 saniyede bir ekranda yatay kayarak soldan sağa geçer.
         # Kayma dış grupta ekran ekseninde olur (iç dikdörtgen eğik kalır); girişte ve çıkışta opaklıkla yumuşar.
         self.ekle('<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.5;0.58;0.9;0.98;1" '
@@ -1376,14 +1404,13 @@ class Sahne:
                   '<animateTransform attributeName="transform" type="translate" values="-170 0;-170 0;1050 0;1050 0" '
                   'keyTimes="0;0.5;0.98;1" dur="24s" repeatCount="indefinite"/>'
                   '<rect x="-80" y="-200" width="160" height="700" fill="url(#huzme)" transform="rotate(24 0 150)"/></g>')
-        self.ekle("</g>")
 
     # ---------- yazı ----------
     def yazi(self) -> None:
         self.ekle('<ellipse cx="160" cy="160" rx="190" ry="70" fill="url(#yaziGolge)"/>',
                   '<g font-family="\'Segoe UI\',Ubuntu,\'Helvetica Neue\',Arial,sans-serif">'
-                  '<text x="48" y="152" font-size="42" font-weight="800" fill="#f5f7ff" letter-spacing="0.5">Kuzey Labs</text>'
-                  '<text x="50" y="184" font-size="15" font-weight="600" fill="#7fb4ff">kuzeylabs.com</text></g>')
+                  '<text x="46" y="152" font-size="48" font-weight="800" fill="#f5f7ff" letter-spacing="0.5">Kuzey Labs</text>'
+                  '<text x="49" y="186" font-size="21" font-weight="600" fill="#8cbcff">kuzeylabs.com</text></g>')
 
     # ---------- parçalar ----------
     def parcala(self) -> tuple[str, list[dict], str]:
@@ -1396,7 +1423,7 @@ class Sahne:
                   "Project Hail Mary'deki iki gemi ve Interstellar'ın kara deliği.\">",
                   '<!-- uzay_uret.py ile yordamsal üretildi; elle düzenlenmez -->',
                   f'<clipPath id="kose"><rect width="{W}" height="{H}" rx="16"/></clipPath>')
-        self.tanimlar(); self.ortak_tanimlar()
+        self.tanimlar(); tanim = self.parca[-1]; self.ortak_tanimlar()
         self.ekle('<g clip-path="url(#kose)">')
         self.zemin(); self.samanyolu(); self.parlaklar(); self.uydu_izi(); self.takimyildiz(); self.gizli_takimyildizlar()
         self.kayan_yildizlar(); self.roket()
@@ -1407,13 +1434,53 @@ class Sahne:
         self.isik_oyunlari(); self.yazi()
         self.ekle("</g>", f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="16" fill="none" stroke="#30363d"/>', "</svg>")
         son = "\n".join(self.parca) + "\n"
-        return bas, self.anomaliler, son
+        durgun = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">'
+                  + tanim + "".join(self.durgun) + "</svg>")
+        resim = f'<image width="{W}" height="{H}" href="{resme_pisir(durgun, ARKA)}"/>'
+        assert bas.count(ARKA_YER) == 1
+        return bas.replace(ARKA_YER, resim), self.anomaliler, son
 
 
 # anomaliler ve süreleri (saniye); sıra yalnız ANOMALILER dizisinin sırasıdır, oynama sırası zincirden gelir
 SURELER = {"sputnik": 11, "apollo": 13, "voyager": 15, "hubble": 13.5, "starman": 13.5,
            "starship": 14, "halley": 12, "buyukayi": 9, "monolit": 12, "hiperuzay": 15,
            "majortom": 13, "turksat": 12, "hailmary": 14, "interstellar": 15}
+
+
+ARKA_YER = "<!--ARKA-->"
+ARKA = FOTO / "arka-plan.jpg"     # pişmiş arka plan; yanındaki .iz dosyası hangi durgun SVG'den çıktığını tutar
+ARKA_CIZIM, ARKA_OLCEK = 2, 1.5   # 2 katta çizilir, 1,5 kata inerek saklanır: telefonda keskin, dosya küçük
+
+
+def resme_pisir(svg: str, dosya: Path) -> str:
+    """Kıpırdamayan çizimi bir kez resme çevirir ve data adresi döndürür. Arka plan (gürültü bulutsu, Samanyolu, uzak
+    yıldızlar, kenar ışıkları) JPEG olur; kayan yıldız katmanları saydam PNG. Telefonda takılmanın kaynağı bunlardı:
+    süzgeçler ve binlerce daire her karede yeniden çiziliyordu, resim ise neredeyse bedava çizilir.
+    SVG değişmediyse eski resim kullanılır; değiştiyse Chrome (playwright) ile yeniden çizilir."""
+    import hashlib
+    saydam = dosya.suffix == ".png"
+    iz = dosya.with_suffix(".iz")
+    imza = hashlib.sha256(f"{ARKA_CIZIM}|{ARKA_OLCEK}|{svg}".encode("utf-8")).hexdigest()
+    if not (dosya.exists() and iz.exists() and iz.read_text(encoding="utf-8").strip() == imza):
+        from io import BytesIO
+        from PIL import Image
+        from playwright.sync_api import sync_playwright   # yoksa burada açıkça düşer: eski resimle sessizce sürmez
+        with sync_playwright() as pw:
+            b = pw.chromium.launch(channel="chrome", headless=True)
+            s = b.new_page(viewport={"width": W, "height": H}, device_scale_factor=ARKA_CIZIM)
+            s.set_content(f"<!doctype html><body style='margin:0;background:{'transparent' if saydam else '#000'}'>{svg}</body>")
+            s.wait_for_timeout(300)
+            png = s.locator("svg").first.screenshot(omit_background=saydam)
+            b.close()
+        resim = Image.open(BytesIO(png)).convert("RGBA" if saydam else "RGB")
+        resim = resim.resize((int(W * ARKA_OLCEK), int(H * ARKA_OLCEK)), Image.LANCZOS)
+        if saydam:
+            resim.save(dosya, "PNG", optimize=True)
+        else:
+            resim.save(dosya, "JPEG", quality=76, optimize=True, progressive=True)
+        iz.write_text(imza + "\n", encoding="utf-8")
+    tur = "png" if saydam else "jpeg"
+    return f"data:image/{tur};base64," + base64.b64encode(dosya.read_bytes()).decode("ascii")
 
 
 def parcala() -> tuple[str, list[dict], str]:
