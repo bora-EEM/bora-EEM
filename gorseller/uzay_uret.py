@@ -20,8 +20,11 @@ import base64
 import json
 import math
 import random
+import re
 from contextlib import contextmanager
 from pathlib import Path
+
+from hafiflet import hafiflet
 
 W, H = 880, 300
 TOHUM = 1907                      # aynı tohum, aynı gökyüzü
@@ -152,6 +155,11 @@ def sallan(dy: float, sure: float) -> str:
 
 
 FOTO = Path(__file__).resolve().parent / "foto"
+def foto_uri(dosya: str) -> str:
+    """Pişmiş resim (film_resimleri.py) data adresi olarak."""
+    return "data:image/webp;base64," + base64.b64encode((FOTO / dosya).read_bytes()).decode("ascii")
+
+
 KART_YAZI = 'font-family="ui-monospace,SFMono-Regular,Consolas,monospace" text-anchor="middle"'
 
 
@@ -159,17 +167,16 @@ def foto_karti(dosya: str, baslik: str, kaynak: str, merkez: tuple, cikis: tuple
                t0: float, t1: float, t2: float, t3: float, ek: str = "") -> str:
     """Gerçek fotoğraf kartı: çıkış noktasından büyüyerek merkezde açılır, t1..t2 durur, küçülerek dönüş noktasına gider.
     Fotoğraf data URI olarak gömülür (GitHub resim içinden dış adres yüklemez)."""
-    veri = base64.b64encode((FOTO / dosya).read_bytes()).decode("ascii")
     ac, kapa = "0.2 0.7 0.3 1", "0.6 0 0.85 0.4"
     m, c, d = (f"{f(x)} {f(y)}" for x, y in (merkez, cikis, donus))
     return (f'<g opacity="0">{gorun([(t0, 0), (t0 + 0.25, 1), (t3 - 0.25, 1), (t3, 0)])}'
             f'<g>{tasi([(t0, c), (t1, m, ac), (t2, m, DUZ), (t3, d, kapa)])}'
             f'<g>{olcekle([(t0, "0.04 0.04"), (t1, "1.3 1.3", ac), (t2, "1.3 1.3", DUZ), (t3, "0.04 0.04", kapa)])}\n'
             f'  <rect x="-82" y="-88" width="164" height="184" rx="4" fill="#070914" fill-opacity="0.93" stroke="#9fb0d6" stroke-width="0.6" stroke-opacity="0.75"/>\n'
-            f'  <image x="-70" y="-80" width="140" height="140" href="data:image/jpeg;base64,{veri}"/>\n'
+            f'  <image x="-70" y="-80" width="140" height="140" href="{foto_uri(dosya)}"/>\n'
             f'  <rect x="-70" y="-80" width="140" height="140" fill="none" stroke="#dbe7ff" stroke-width="0.4" stroke-opacity="0.45"/>{ek}\n'
-            f'  <text y="76" {KART_YAZI} font-size="13" font-weight="700" letter-spacing="0.2" fill="#e3eaff">{baslik}</text>\n'
-            f'  <text y="89" {KART_YAZI} font-size="10" fill="#a9b6da">{kaynak}</text>\n'
+            f'  <text y="75" {KART_YAZI} font-size="14" font-weight="700" letter-spacing="0.2" fill="#e3eaff">{baslik}</text>\n'
+            f'  <text y="90" {KART_YAZI} font-size="13" fill="#c3cfee">{kaynak}</text>\n'
             f'</g></g></g>')
 
 
@@ -372,7 +379,7 @@ class Sahne:
                 continue
             # aynı yıldız alanı iki kez, yan yana: sola kaydıkça dikişsiz döner
             uri = resme_pisir(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">{govde}</svg>',
-                              FOTO / f"yildiz-katmani-{katman}.png")
+                              FOTO / f"yildiz-katmani-{katman}.webp")
             self.ekle(f'<defs><image id="yk{katman}" width="{W}" height="{H}" href="{uri}"/></defs>'
                       f'<g><animateTransform attributeName="transform" type="translate" from="0 0" to="-{W} 0" '
                       f'dur="{hiz}s" repeatCount="indefinite"/><use href="#yk{katman}"/><use href="#yk{katman}" x="{W}"/></g>')
@@ -449,6 +456,7 @@ class Sahne:
         with saat("k_buyukayi", SURELER["buyukayi"]):
             parla = gorun([(0.4, 0.5), (1.0, 1), (6.8, 1), (7.8, 0.5)])
             yan = gorun([(3.4, 0.1), (3.9, 1), (6.8, 1), (7.8, 0.1)])
+            yazisi = gorun([(3.4, 0), (3.9, 1), (6.8, 1), (7.8, 0)])
         self.ekle('<g opacity="0.5">' + parla)
         for ad, r in zip(("dubhe", "merak", "phecda", "megrez", "alioth", "mizar", "alkaid"), (2.4, 2.1, 2.0, 1.6, 2.2, 2.1, 2.1)):
             x, yy = yer[ad]
@@ -472,10 +480,10 @@ class Sahne:
   <g><path d="M0,-19 L2.6,-2.6 L19,0 L2.6,2.6 L0,19 L-2.6,2.6 L-19,0 L-2.6,-2.6 Z" fill="#fff"/>
     <path d="M0,-9 L1.2,-1.2 L9,0 L1.2,1.2 L0,9 L-1.2,1.2 L-9,0 L-1.2,-1.2 Z" fill="#fff" transform="rotate(45)"/>
     <animateTransform attributeName="transform" type="rotate" values="0;12;0" dur="7s" repeatCount="indefinite"/></g>
-  <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="18" font-weight="700" fill="#dce4f8" stroke="#090816" stroke-width="3.8" stroke-opacity="0.7" paint-order="stroke">
-    <text y="82" text-anchor="middle" letter-spacing="0.4">KUZEY YILDIZI</text>
-    <text y="101" text-anchor="middle" font-size="14" font-weight="600" fill="#aebbe0">yaklaşık 430 ışık yılı</text></g>
   </g>
+  <g opacity="0">{yazisi}<g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="18" font-weight="700" fill="#dce4f8" stroke="#090816" stroke-width="3.8" stroke-opacity="0.7" paint-order="stroke">
+    <text y="82" text-anchor="middle" letter-spacing="0.4">KUZEY YILDIZI</text>
+    <text y="101" text-anchor="middle" font-size="14" font-weight="600" fill="#aebbe0">yaklaşık 430 ışık yılı</text></g></g>
 </g>''')
 
     def takimyildiz_yerleri(self) -> dict[str, dict[str, tuple]]:
@@ -682,11 +690,11 @@ class Sahne:
         isilti = gorun([nk for t in (2.4, 6.6) for nk in [(t, 0), (t + 0.3, 1), (t + 1.0, 0)]])
         # Dünya fotoğrafta (111, 110) pikselde; 220 px kare 140 px gösterilir -> kartta (0.6, -10)
         dunya = (f'\n  <g opacity="0">{gorun([(8.1, 0), (8.6, 1), (11.3, 1), (11.6, 0)])}'
-                 f'<circle cx="0.6" cy="-10" r="5.5" fill="none" stroke="#9fd0ff" stroke-width="0.6"/>'
-                 f'<path d="M5,-13.5 L14,-21" stroke="#9fd0ff" stroke-width="0.45"/>'
-                 f'<text x="15.5" y="-21.5" {KART_YAZI.replace("middle", "start")} font-size="10" font-weight="700" '
-                 f'fill="#cfe6ff" stroke="#070914" stroke-width="2.2" stroke-opacity="0.7" paint-order="stroke">Dünya</text></g>')
-        kart = foto_karti("voyager-soluk-mavi-nokta.jpg", "SOLUK MAVİ NOKTA", "NASA/JPL · 1990",
+                 '<circle cx="0.6" cy="-10" r="6.5" fill="none" stroke="#bfe0ff" stroke-width="1.2"/>'
+                 '<path d="M0.6,-16.5 V-31" stroke="#bfe0ff" stroke-width="1.2"/>'
+                 '<rect x="-39" y="-59" width="79" height="28" rx="6" fill="#050811" fill-opacity="0.9" stroke="#bfe0ff" stroke-width="0.8"/>'
+                 f'<text x="0.6" y="-38" {KART_YAZI} font-size="21" font-weight="700" fill="#ffffff">Dünya</text></g>')
+        kart = foto_karti("voyager-soluk-mavi-nokta.webp", "SOLUK MAVİ NOKTA", "NASA/JPL · 1990",
                           (460, 140), (598, 94), (614, 85), 7.0, 7.9, 11.6, 12.5, dunya)
         rtg = "".join(f'<g transform="translate({f(-12 - 5.2 * i)} {f(10 + 2.6 * i)}) rotate(-26.6)">'
                       f'<rect x="-2.4" y="-1.6" width="4.8" height="3.2" rx="0.6" fill="url(#metal)"/>'
@@ -729,7 +737,7 @@ class Sahne:
     def hubble(self) -> str:
         ax, ay = 515, 236                      # çekim anında açıklığın yeri
         kx, ky = 628, 130                      # fotoğraf kartının ortası (yazının sağında)
-        kart = foto_karti("hubble-ultra-derin-alan.jpg", "ULTRA DERİN ALAN",
+        kart = foto_karti("hubble-ultra-derin-alan.webp", "ULTRA DERİN ALAN",
                           "NASA/ESA · 2004", (kx, ky), (ax, ay), (466, 234), 5.1, 5.9, 9.6, 10.4)
         izgara = " ".join(f"M-1,{f(y)} H9" for y in (-39.4, -35.8, -32.2, -28.6, -25, -21.4, -17.8)) + " M4,-43 V-14"
         izgara += " " + " ".join(f"M-1,{f(-y)} H9" for y in (-39.4, -35.8, -32.2, -28.6, -25, -21.4, -17.8)) + " M4,43 V14"
@@ -995,10 +1003,9 @@ class Sahne:
             L = r0 * r.uniform(0.55, 1.05) + 18
             w = 0.5 + 1.2 * (r0 / 430)
             # gelişte uzun çizgiler noktaya toplanır, gidişte yeniden uzar, sonra her şey yerine döner
-            uza = [(3.5, f(r0 + L)), (4.6, f(r0), "0 0 0.3 1"), (9.9, f(r0), DUZ), (10.9, f(r0 + L), "0.7 0 1 1"),
-                   (12.0, f(r0 + L), DUZ), (13.0, f(r0), "0 0 0.3 1")]
-            cizgiler.append(f'<g transform="rotate({aci:.0f})"><line x1="{f(r0)}" y1="0" x2="{f(r0)}" y2="0" stroke-width="{w:.1f}">'
-                            f'{degistir("x2", uza)}</line></g>')
+            cizgiler.append(f'<path d="M{f(r0)},0H{f(r0 + L)}" transform="rotate({aci:.0f})" pathLength="1" stroke-width="{w:.1f}"/>')
+        # uzama tek animasyondur: çizgiler çizik kaymasını üstlerinden devralır (1: görünmez, 0: tam boy)
+        uza = [(3.5, 0), (4.6, 0.985, "0 0 0.3 1"), (9.9, 0.985, DUZ), (10.9, 0, "0.7 0 1 1"), (12.0, 0, DUZ), (13.0, 0.985, "0 0 0.3 1")]
         vx, vy = 522, 180                      # geminin ışık hızından çıktığı yer
         gx, gy = 640, 157                      # yeniden atladığı yer
         # gemi: yassı, oval gövde; önde iki çatal, sancakta kokpit tüpü, arkada mavi motor ışığı
@@ -1041,7 +1048,7 @@ class Sahne:
         return f'''<g opacity="0">{gorun([(0, 0), (0.1, 1), (14.6, 1), (14.9, 0)])}
  <text x="50" y="104" font-family="'Segoe UI',Ubuntu,'Helvetica Neue',Arial,sans-serif" font-size="19" font-style="italic" fill="#4bd5ee" letter-spacing="0.4" opacity="0">{gorun([(0.2, 0), (0.9, 1), (2.8, 1), (3.5, 0)])}Çok çok uzak bir galakside…</text>
  <rect width="{W}" height="{H}" fill="#05040d" opacity="0">{gorun([(3.0, 0), (3.6, 0.55), (12.8, 0.55), (14.2, 0)])}</rect>
- <g transform="translate({cx} {cy})" stroke="#dbeaff" stroke-linecap="round" opacity="0">{gorun([(3.2, 0), (3.6, 1), (4.8, 1), (5.8, 0.4), (9.4, 0.4), (9.9, 1), (12.8, 1), (13.8, 0)])}{"".join(cizgiler)}</g>
+ <g transform="translate({cx} {cy})" stroke="#dbeaff" stroke-linecap="round" stroke-dasharray="1 2" opacity="0">{degistir("stroke-dashoffset", uza)}{gorun([(3.2, 0), (3.6, 1), (4.8, 1), (5.8, 0.4), (9.4, 0.4), (9.9, 1), (12.8, 1), (13.8, 0)])}{"".join(cizgiler)}</g>
  <circle cx="{vx}" cy="{vy}" r="4" fill="none" stroke="#cfe6ff" stroke-width="1.2" opacity="0">{degistir("r", [(4.6, 4), (5.8, 120, "0.2 0.6 0.4 1")])}{gorun([(4.55, 0), (4.65, 0.7), (5.8, 0)])}</circle>
  <circle cx="{vx}" cy="{vy}" r="3" fill="url(#parlama)" opacity="0">{degistir("r", [(4.5, 3), (4.9, 44, "0.2 0.6 0.4 1")])}{gorun([(4.48, 0), (4.56, 1), (5.3, 0)])}</circle>
  {gemi}
@@ -1141,245 +1148,175 @@ class Sahne:
  </g></g>
 </g></g>'''
 
-    # 13. Project Hail Mary · 2026: Tau Ceti'de Hail Mary ile Rocky'nin ksenonit gemisi Blip-A buluşur
+    # 13. Project Hail Mary · 2026: Blip-A karanlıktan belirir, robot kolu Hail Mary'ye kapsül fırlatır, uzaylı mühendis tünel kurar
     def hailmary(self) -> str:
-        """Hail Mary filmdeki düzeniyle: önde büyük mürettebat bölümü, kafes omurga, uydu tipi güneş kanatları,
-        üç yakıt tankı, arkada Petrova ışığıyla yanan spin sürücüleri. Buluşmadan sonra mürettebat bölümü omurgadan
-        ayrılır, kablolarla açılır, yan döner ve bütün gemi santrifüj olarak döner.
-        Blip-A romandaki tarifle: piramit burun, dört panelli ince sap, elmas sekizyüzlü gövde, üç kalın çubuk,
-        geniş yamuk taban; benekli gri-bej ksenonit, penceresiz, Hail Mary'nin iki katından büyük.
-        Eridyanca konuşma akordur: küçük porte üstünde renkli üç nota; Rocky konuşurken gemisinin telleri parlar."""
+        """Karanlıkta buluşma: sağı, üstü ve altı kareden taşan uzaylı gemisi gölgede durur, Hail Mary'nin ışığı gövdede gezinir.
+        Geminin kapısından canlı gibi bir ağ fışkırır, ardından kara pullu kabuk onu sarar; tünel kendi kendine büyür. Ucunda
+        bir kapı oluşur ve Hail Mary'nin burnuna oturur. Gemiler, tünel ve kapı pişmiş resimdir (film_resimleri.py)."""
         gel = "0.2 0.6 0.35 1"
+        HX, HY, HO = 428, 150, 1.34
+        GX0, GX1, GY = 511, 690, 150                       # tünelin Hail Mary ucu, gemi ucu ve ekseni
+        B0, B1, KILIT = 6.6, 9.3, 10.5                     # büyümenin başı, sonu ve kapının oturduğu an
+        r = random.Random(77)
 
-        def akor(x: float, y: float, t: float, renkler: tuple, yukari: float = -16) -> str:
-            porte = " ".join(f"M-8,{f(-4.4 + 2.2 * i)} H8" for i in range(5))
-            bas = "".join(f'<ellipse cx="{f(-0.4 + (1.6 if i == 1 else 0))}" cy="{f(3.3 - 3.3 * i)}" rx="1.7" ry="1.15" '
-                          f'fill="{r}" transform="rotate(-20 {f(-0.4 + (1.6 if i == 1 else 0))} {f(3.3 - 3.3 * i)})"/>'
-                          for i, r in enumerate(renkler))
-            return (f'<g transform="translate({f(x)} {f(y)})" opacity="0">{gorun([(t, 0), (t + 0.25, 1), (t + 1.3, 1), (t + 1.9, 0)])}'
-                    f'<g>{tasi([(t, "0 0"), (t + 1.9, f"0 {f(yukari)}", "0.2 0.6 0.4 1")])}<g transform="scale(2.1)">'
-                    f'<path d="{porte}" stroke="#9fb0d6" stroke-width="0.35" opacity="0.65"/>'
-                    f'<path d="M2.6,-0.6 V-11" stroke="#dfe7ff" stroke-width="0.5"/>'
-                    f'<g filter="url(#isik)">{bas}</g></g></g></g>')
+        kil = [(KILIT, "0 0", DUZ), (KILIT + 0.12, "-2.2 0", "0.1 0.7 0.3 1"), (KILIT + 1.0, "0 0")]
+        gemi = (f'<g>{tasi([(0, f"{HX - 40} {HY + 5}"), (5.2, f"{HX} {HY}", gel)])}<g>{tasi(kil)}'
+                f'<image x="{f(-75 * HO)}" y="{f(-60 * HO)}" width="{f(150 * HO)}" height="{f(120 * HO)}" href="{foto_uri("hail-mary-los.webp")}"/>'
+                + "".join(f'<circle cx="{x}" cy="{y}" r="5" fill="url(#hm{c})" opacity="0">{gorun(titres(1.0 + g, 14, 0.8, 0, 0.9))}</circle>'
+                          for x, y, c, g in ((-95, -35, "Kor", 0), (-95, 35, "Kor", 0.4))) + '</g></g>')
 
-        # ---- Hail Mary (burun +x yönünde) ----
-        E = 14                                     # santrifüjde her iki yarının açıldığı uzaklık
-        ac, don = (8.2, 9.4), (9.4, 10.2)
-        izgara = " ".join(f"M-19,{f(y)} H-10" for y in (-27, -23, -19, -15, -11)) + " M-14.5,-31 V-7"
-        izgara += " " + " ".join(f"M-19,{f(-y)} H-10" for y in (-27, -23, -19, -15, -11)) + " M-14.5,31 V7"
-        tank = lambda y, h: (f'<rect x="-43" y="{f(y)}" width="20" height="{f(h)}" rx="{f(h / 2)}" fill="url(#hmTank)"/>'
-                             f'<rect x="-35.5" y="{f(y)}" width="2.6" height="{f(h)}" fill="url(#hmAltin)"/>'
-                             f'<path d="M-41,{f(y + h * 0.28)} H-25" stroke="#fff" stroke-width="0.45" opacity="0.6"/>')
-        motor = titres(0, 4.6, 0.16, 0.8, 1)
-        motor[-1] = (4.6, 0, "0.4 0 0.6 1")
-        surucu = "".join(f'<circle cx="-45.4" cy="{f(y)}" r="0.55" fill="#ff7a5c"/>' for y in range(-8, 9, 2))
-        arka = f'''<g>{tasi([(ac[0], "0 0"), (ac[1], f"{-E} 0")])}
-    <ellipse cx="-53" cy="0" rx="10" ry="11" fill="url(#hmPetrova)" opacity="0">{gorun(motor)}</ellipse>
-    <path d="M-14.5,-4 V-7 M-14.5,4 V7" stroke="#aab2be" stroke-width="0.8"/>
-    <rect x="-19" y="-31" width="9" height="24" fill="url(#hmPanel)" stroke="#c9a55a" stroke-width="0.45"/>
-    <rect x="-19" y="7" width="9" height="24" fill="url(#hmPanel)" stroke="#c9a55a" stroke-width="0.45"/>
-    <path d="{izgara}" stroke="#7c93d8" stroke-width="0.28" opacity="0.8"/>
-    <path d="M-24,-1.6 H-2 M-24,1.6 H-2" stroke="#b8c0cc" stroke-width="0.6"/>
-    <path d="M-24,-1.6 L-20,1.6 L-16,-1.6 L-12,1.6 L-8,-1.6 L-4,1.6 L-2,-1.6" stroke="#8a929f" stroke-width="0.45" fill="none"/>
-    {tank(-10.6, 6.6)}{tank(4, 6.6)}{tank(-4.6, 9.2)}
-    <rect x="-24.6" y="-11.6" width="2.2" height="23.2" rx="0.8" fill="#8a929f"/>
-    <rect x="-46.4" y="-10" width="3.6" height="20" rx="1" fill="#2f343c"/>
-    <g opacity="0.35">{gorun([(0, 1), (4.6, 1, DUZ), (5.2, 0.35)])}{surucu}</g>
-    <rect x="-2" y="-3.4" width="8" height="6.8" rx="1" fill="url(#nozul)"/>
-    <path d="M6,-3.4 V3.4" stroke="#20242b" stroke-width="0.8"/>
-   </g>'''
-        kablo = "".join(f'<line x1="6" y1="{y}" x2="6" y2="{y}" stroke="#d9dee6" stroke-width="0.45">'
-                        f'{degistir("x1", [(ac[0], 6), (ac[1], 6 - E)])}'
-                        f'{degistir("x2", [(ac[0], 6), (ac[1], 6 + E), (don[0], 6 + E, DUZ), (don[1], 25)])}</line>'
-                        for y in (-2.4, 2.4))
-        on = f'''<g opacity="0">{gorun([(ac[0], 0), (ac[0] + 0.1, 1)])}{kablo}</g>
-   <g transform="translate(19 0)">{tasi([(ac[0], "19 0"), (ac[1], f"{19 + E} 0")])}<g>{dondur([(don[0], 0), (don[1], 90)])}
-    <path d="M-13,-8 H5 Q13,-7.4 16,-3 L16,3 Q13,7.4 5,8 H-13 Z" fill="url(#hmBeyaz)"/>
-    <rect x="-13" y="-8" width="3.4" height="16" fill="url(#hmAltin)"/>
-    <path d="M-4,-8 V8 M3,-8 V8" stroke="#9aa3b0" stroke-width="0.4"/>
-    <path d="M-9.6,-6.5 H5 Q10.5,-6.1 13.6,-3.4" stroke="#fff" stroke-width="0.6" opacity="0.7" fill="none"/>
-    <rect x="8.4" y="-4.6" width="3" height="1.9" rx="0.5" fill="#16202e"/><rect x="8.4" y="2.7" width="3" height="1.9" rx="0.5" fill="#16202e"/>
-    <circle cx="9.4" cy="-3.9" r="0.45" fill="#ffd27a"/>
-    <rect x="16" y="-2.4" width="2.4" height="4.8" rx="0.6" fill="#8a929e" stroke="#4f5766" stroke-width="0.3"/>
-   </g></g>'''
-        insan_yol = [(0, "372 350"), (4.8, "522 152", gel)]
-        insan_yon = [(0, -48), (4.8, -12, gel), (don[1], -10, DUZ), (14, 250, "0.55 0 0.75 1")]
+        # uzaylı gemisi: önce yalnız yıldızları örten kara bir kütle, sonra derinde tek tek yanan ışıklar
+        dev = (f'<g opacity="0">{gorun([(0.6, 0), (3.2, 1, "0.4 0 0.6 1")])}<g>{tasi([(0.6, "46 0"), (6.0, "0 0", gel)])}'
+               f'<image x="500" y="0" width="460" height="300" href="{foto_uri("gemi-golge.webp")}"/>')
+        for i, (x, y, w, h, t0) in enumerate(((589, 0, 231, 144, 3.0), (680, 0, 223, 122, 3.8), (711, 42, 237, 159, 4.6), (666, 149, 237, 151, 5.4))):
+            dev += (f'<image x="{x}" y="{y}" width="{w}" height="{h}" opacity="0" href="{foto_uri(f"gemi-isik-{i + 1}.webp")}">'
+                    f'{gorun([(t0, 0), (t0 + 0.8, 0.95), (t0 + 1.9, 0)])}</image>')
+        for x, y, t0 in ((742, 128, 2.2), (775, 171, 2.7), (803, 92, 3.3), (836, 205, 3.6), (868, 60, 4.2), (812, 148, 4.4)):
+            dev += f'<circle cx="{x}" cy="{y}" r="4" fill="url(#hmKor)" opacity="0">{gorun([(t0, 0), (t0 + 0.5, 0.8)] + titres(t0 + 1.4, 13.6, 1.3, 0.8, 0.35))}</circle>'
+        dev += "</g></g>"
 
-        # ---- Blip-A (burun -x yönünde) ----
-        tel_x = (27, 32, 37, 42)
-        tel = lambda renk, w: "".join(f'<path d="M{x},{f(-11 - (x - 8) * 8 / 42 + 2)} V{f(11 + (x - 8) * 8 / 42 - 2)}" '
-                                      f'stroke="{renk}" stroke-width="{w}"/>' for x in tel_x)
-        konus = [5.0, 5.9, 7.6]
-        tel_parla = gorun([nk for t in konus for nk in [(t - 0.02, 0), (t + 0.05, 1), (t + 0.8, 0)]])
-        cubuk = lambda d: (f'<path d="{d}" stroke="#4a443a" stroke-width="5.4" stroke-linecap="round"/>'
-                           f'<path d="{d}" stroke="#8f8471" stroke-width="3.8" stroke-linecap="round"/>'
-                           f'<path d="{d}" stroke="#c4b799" stroke-width="0.8" stroke-linecap="round" opacity="0.6" transform="translate(0 -1)"/>')
-        govde_ss = ('<path d="M-76,0 L-63,-6.5 L-63,6.5 Z"/><rect x="-63" y="-2" width="34" height="4"/>'
-                    '<path d="M-32,0 L-6,-23 L20,0 L-6,23 Z"/><path d="M48,-20 L64,-30 L68,-29 L68,29 L64,30 L48,20 Z"/>')
-        blip = f'''<g>
-    <ellipse cx="76" cy="0" rx="12" ry="26" fill="url(#hmPetrova)" opacity="0">{gorun([(0, 0.9), (3.4, 0.9, DUZ), (5.0, 0)])}</ellipse>
-    <path d="M-56,-2 L-43,-2 L-48,-18 L-60,-18 Z" fill="#5c5446" stroke="#a89c82" stroke-width="0.35"/>
-    <path d="M-56,2 L-43,2 L-48,18 L-60,18 Z" fill="#4a443a" stroke="#a89c82" stroke-width="0.35"/>
-    {cubuk("M8,-11 L50,-19")}{cubuk("M18,0 L50,0")}{cubuk("M8,11 L50,19")}
-    <g opacity="0.55">{tel("#e9dcc0", 0.35)}</g>
-    <g opacity="0" filter="url(#isik)">{tel_parla}{tel("#ffd9a0", 0.6)}</g>
-    <path d="M-63,-2 H-29 V2 H-63 Z" fill="#8a7f6c"/>
-    <path d="M-63,-1.6 H-30" stroke="#d2c6a8" stroke-width="0.5" opacity="0.7"/>
-    <path d="M-76,0 L-63,-6.5 L-63,0 Z" fill="#c2b597"/><path d="M-76,0 L-63,6.5 L-63,0 Z" fill="#6c6454"/>
-    <path d="M-53,-2 L-41,-2 L-38,-11 L-49,-11 Z" fill="#9a8f78" stroke="#d2c6a8" stroke-width="0.35"/>
-    <path d="M-53,2 L-41,2 L-38,11 L-49,11 Z" fill="#7a705f" stroke="#d2c6a8" stroke-width="0.35"/>
-    <path d="M-32,0 L-6,-23 L-3,3 Z" fill="#c4b698"/><path d="M-6,-23 L20,0 L-3,3 Z" fill="#9a8f79"/>
-    <path d="M20,0 L-6,23 L-3,3 Z" fill="#5b5448"/><path d="M-6,23 L-32,0 L-3,3 Z" fill="#776d5c"/>
-    <path d="M-32,0 L-6,-23 L20,0 L-6,23 Z M-6,-23 L-3,3 L-32,0 M-3,3 L20,0 M-3,3 L-6,23" fill="none" stroke="#d8ccae" stroke-width="0.4" stroke-linejoin="round" opacity="0.75"/>
-    <path d="M48,-20 L64,-30 L64,30 L48,20 Z" fill="url(#blTaban)"/>
-    <path d="M64,-30 L68,-29 L68,29 L64,30 Z" fill="#3e392f"/>
-    <path d="M48,-20 L64,-30 L68,-29 M48,-8 H64 M48,8 H64" stroke="#d2c6a8" stroke-width="0.4" fill="none" opacity="0.7"/>
-    <g fill="#000" opacity="0.45" filter="url(#blBenek)">{govde_ss}</g>
-    <path d="M-27,-1.2 L-7,-18.6 M-24,2.2 L-7,17.4 M15,-1.6 L-2,-16 M-61,0 H-31 M51,-15 L62,-22 V22 L51,15" stroke="#2e2a23" stroke-width="0.55" stroke-dasharray="1.4 1" fill="none" opacity="0.8"/>
-   </g>'''
-        blip_yol = [(0, "1000 96"), (5.0, "724 124", gel), (14, "714 127", DUZ)]
+        # ağız: geminin gövdesindeki kapı aralanır, içinden kor ışığı sızar
+        ust_uri, alt_uri = foto_uri("kapi-ust.webp"), foto_uri("kapi-alt.webp")
+        isik_agiz = (f'<g transform="translate(686 {GY})" opacity="0">{gorun([(5.6, 0), (6.4, 1), (9.6, 0.75), (13, 0.5)])}'
+                     f'<ellipse rx="34" ry="26" fill="url(#hmKor)" opacity="0.8"/></g>')
+        kok = (f'<g opacity="0">{gorun([(2.8, 0), (4.6, 1)])}<g transform="translate(694 {GY}) scale(-1.45 1.4)">'
+               f'<g>{tasi([(5.4, "0 0"), (6.3, "0 -2.6", gel), (9.0, "0 -2.6", DUZ), (9.8, "0 0")])}<use href="#hmUst"/></g>'
+               f'<g>{tasi([(5.4, "0 0"), (6.3, "0 2.6", gel), (9.0, "0 2.6", DUZ), (9.8, "0 0")])}<use href="#hmAlt"/></g></g></g>')
 
-        tau = (f'<g opacity="0">{gorun([(0.2, 0), (1.6, 1), (12.6, 1), (13.6, 0)])}'
-               f'<circle cx="826" cy="40" r="16" fill="url(#hmTau)"/><circle cx="826" cy="40" r="2" fill="#fff1cf"/>'
-               f'{etiket("TAU CETI", 826, 62, boyut=13, renk="#b4c1e4")}</g>')
-        return f'''<defs>
-  <linearGradient id="hmBeyaz" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#dfe4ea"/><stop offset="1" stop-color="#848d9b"/>
-  </linearGradient>
-  <linearGradient id="hmTank" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#e9edf2"/><stop offset="0.5" stop-color="#aab2be"/><stop offset="1" stop-color="#555d6a"/>
-  </linearGradient>
-  <linearGradient id="hmAltin" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#ffe7a3"/><stop offset="0.5" stop-color="#c9932f"/><stop offset="1" stop-color="#6e4c12"/>
-  </linearGradient>
-  <linearGradient id="hmPanel" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#3a52a8"/><stop offset="0.55" stop-color="#1d2a62"/><stop offset="1" stop-color="#111a3d"/>
-  </linearGradient>
-  <radialGradient id="hmPetrova" cx="0.5" cy="0.5" r="0.5">
-    <stop offset="0" stop-color="#ffd0c4"/><stop offset="0.25" stop-color="#ff5a3c" stop-opacity="0.85"/><stop offset="0.6" stop-color="#b3122e" stop-opacity="0.35"/><stop offset="1" stop-color="#6a0a2a" stop-opacity="0"/>
-  </radialGradient>
-  <linearGradient id="blTaban" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#bcae90"/><stop offset="0.5" stop-color="#857a66"/><stop offset="1" stop-color="#4a443a"/>
-  </linearGradient>
-  <radialGradient id="hmTau" cx="0.5" cy="0.5" r="0.5">
-    <stop offset="0" stop-color="#ffe2a8" stop-opacity="0.55"/><stop offset="0.4" stop-color="#ffbe6a" stop-opacity="0.16"/><stop offset="1" stop-color="#ffbe6a" stop-opacity="0"/>
-  </radialGradient>
-  <filter id="blBenek" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11"/>
-    <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.6 1.5"/>
-    <feComposite in2="SourceAlpha" operator="in"/>
-  </filter>
-</defs>
-<g opacity="0">{gorun([(0, 0), (0.5, 1), (13.0, 1), (13.8, 0)])}
- {tau}
- <g>{tasi(blip_yol)}<g>{dondur([(0, 5), (5.0, -1, gel), (14, -2, DUZ)])}<g transform="scale(1.1)">
-  {blip}
- </g></g></g>
- <g>{tasi(insan_yol)}<g>{dondur(insan_yon)}<g transform="scale(1.05)">
-  {arka}
-  {on}
- </g></g></g>
- {akor(652, 92, konus[0], ("#ff9a52", "#ffd36e", "#c59bff"))}
- {akor(676, 84, konus[1], ("#7dffb8", "#ff9a52", "#ffd36e"))}
- {akor(546, 116, 6.8, ("#8fd8ff", "#f1f4ff", "#8fd8ff"))}
- {akor(660, 90, konus[2], ("#ffd36e", "#7dffb8", "#ff7ac8"))}
- <g opacity="0">{gorun([(2.4, 0), (3.2, 1), (12.0, 1), (12.8, 0)])}{etiket("PROJECT HAIL MARY · 2026", 620, 264)}</g>
-</g>'''
+        # büyüyen kenar: sağdan sola ilerleyen parmaklı kırpma yolu; parmaklar ayrı ayrı atılır
+        g0 = lambda x: f"{x:.0f}"
+        def kenar(t0, t1, boy, tohum):
+            q = random.Random(tohum)
+            n, adim = 15, 6.8
+            faz = [q.uniform(0, 1) for _ in range(n)]; uz = [q.uniform(0.25, 1) * boy * (1 if i % 2 else 0.25) for i in range(n)]
+            kare = 11
+            degerler = []
+            for k in range(kare):
+                u = k / (kare - 1)
+                xs = []
+                for i in range(n):
+                    h = u + 0.055 * math.sin(2 * math.pi * (2.2 * u + faz[i]))      # atıl, dur, atıl
+                    x = GX1 + 6 - (GX1 + 6 - GX0 + boy + 4) * min(1, max(0, h)) - uz[i] * math.sin(math.pi * min(1, u * 1.02)) ** 0.5
+                    xs.append(max(GX0 - 8, x))
+                y0 = GY - adim * (n - 1) / 2
+                d = f"M{GX1 + 12},{g0(y0)} L{g0(xs[0])},{g0(y0)}"
+                for i in range(1, n):
+                    ya, yb = y0 + (i - 1) * adim, y0 + i * adim
+                    d += f" C{g0(xs[i - 1])},{g0(ya + 2.4)} {g0(xs[i])},{g0(yb - 2.4)} {g0(xs[i])},{g0(yb)}"
+                d += f" L{GX1 + 12},{g0(y0 + (n - 1) * adim)} Z"
+                degerler.append((t0 + (t1 - t0) * u, d, DUZ))
+            return f'<path d="{degerler[0][1]}">{degistir("d", degerler)}</path>'
+        W_T = GX1 - GX0
+        resim = lambda ad: f'<image x="{GX0}" y="{f(GY - 47.5)}" width="{W_T}" height="95" preserveAspectRatio="none" href="{foto_uri(ad)}"/>'
+        govde = (f'<g clip-path="url(#hmK1)" opacity="0">{gorun([(B0, 0), (B0 + 0.1, 1)])}{resim("tunel-ag.webp")}</g>'
+                 f'<g clip-path="url(#hmK2)" opacity="0">{gorun([(B0 + 0.5, 0), (B0 + 0.6, 1)])}{resim("tunel-deri.webp")}</g>'
+                 f'<g opacity="0">{gorun([(B1 - 0.6, 0), (B1 + 0.2, 0.5)] + titres(B1 + 1.0, 13.6, 0.85, 0.12, 0.5))}{resim("tunel-damar.webp")}</g>')
 
-    # 14. Interstellar · 2014: Gargantua ve ona spiral çizerek yaklaşan Endurance, dışarıdaki bizim gözümüzle
+        # kollar: kabuğun önünde kıvrılarak uzayan kara ipler; hedefe varınca kabuğun altında kalırlar
+        kol, uc_kat = [], []
+        for i in range(11):
+            yb = GY + (i - 5) * 3.0; ys = GY + (i - 5) * 3.6 + r.uniform(-2, 2)
+            t0 = B0 - 0.25 + r.uniform(0, 0.55); t1 = t0 + r.uniform(1.5, 2.3)
+            kav = (1 if i % 2 else -1) * r.uniform(12, 36)
+            def yol(m):
+                return (f"M{GX1 + 2},{f(yb)} C{f(GX1 - 44)},{f(yb + kav * m)} {f(GX1 - 62)},{f(GY - kav * 0.9 * m)} {f((GX0 + GX1) / 2)},{f(GY + kav * 0.35 * m)} "
+                        f"S{f(GX0 + 42)},{f(ys + kav * m)} {f(GX0 + r.uniform(-3, 6))},{f(ys)}")
+            dd = [yol(1), yol(0.55), yol(-0.25), yol(0.15)]
+            hareket = degistir("d", [(t0, dd[0]), (t0 + 0.8, dd[1]), (t1, dd[2]), (t1 + 0.9, dd[3])])
+            m1, m2 = t0 + (t1 - t0) * 0.34, t0 + (t1 - t0) * 0.52
+            uza = degistir("stroke-dashoffset", [(t0, 100), (m1, 58, "0.1 0.8 0.3 1"), (m2, 54, DUZ), (t1, 0, "0.5 0 0.2 1")])
+            kal = r.uniform(1.6, 3.4)
+            kol.append(f'<path id="hmY{i}" d="{dd[0]}" pathLength="100" fill="none" stroke-linecap="round" stroke-dasharray="100 110" stroke-dashoffset="100">{hareket}{uza}</path>')
+            uc_kat += [f'<use href="#hmY{i}" stroke="{renk}" stroke-width="{f(w)}"{op}/>' for renk, w, op in
+                       (("#b4581c", kal + 0.7, ""), ("#0b0706", kal, ""), ("#e6d6c2", 0.5, ' stroke-opacity="0.75"'))]
+        kollar = f'<g opacity="0">{gorun([(B0 - 0.3, 0), (B0 - 0.2, 1), (B1 + 0.3, 1, DUZ), (B1 + 1.0, 0)])}<defs>{"".join(kol)}</defs>{"".join(uc_kat)}</g>'
+
+        arka = (f'<ellipse rx="95" ry="52" fill="url(#hmKor)" opacity="0">{gorun([(B0 - 0.2, 0), (B0 + 0.4, 0.75), (B1, 0.6), (KILIT, 0.22)])}'
+                f'{tasi([(B0 - 0.2, f"{GX1 - 30} {GY}"), (B1, f"{GX0 + 60} {GY}", "0.3 0.1 0.5 0.9"), (KILIT + 0.5, f"{(GX0 + GX1) // 2} {GY}")])}</ellipse>')
+        # uçtaki kapı: kabuğun ucundan iki çene olarak büyür, burnun çevresinde kapanır, kilit yanar
+        def cene(ad, yon):
+            kir = f"hmC{ad}"
+            ac = f'{degistir("width", [(B1 - 0.2, 0), (KILIT - 0.55, 34, "0.3 0 0.2 1")])}{degistir("x", [(B1 - 0.2, 17), (KILIT - 0.55, -17, "0.3 0 0.2 1")])}'
+            return (f'<clipPath id="{kir}"><rect x="17" y="-34" width="0" height="68">{ac}</rect></clipPath>',
+                    f'<g>{tasi([(0, f"0 {yon * 9}"), (KILIT - 0.5, f"0 {yon * 9}", DUZ), (KILIT - 0.42, f"0 {yon * 10.5}"), (KILIT, "0 0", "0.7 0 0.9 0.5")])}'
+                    f'<g clip-path="url(#{kir})"><use href="#hm{ad}"/></g></g>')
+        (k_ust, g_ust), (k_alt, g_alt) = cene("Ust", -1), cene("Alt", 1)
+        kapi = (f'<g transform="translate(508 {GY}) scale(1.3 1.32)">{g_ust}{g_alt}'
+                f'<circle r="34" fill="url(#hmKor)" opacity="0">{gorun([(KILIT - 0.02, 0), (KILIT + 0.06, 1, DUZ), (KILIT + 0.9, 0)])}</circle>'
+                f'<g opacity="0">{gorun([(KILIT, 0), (KILIT + 0.05, 1), (KILIT + 0.4, 0.4), (KILIT + 0.8, 1)])}'
+                + "".join(f'<rect x="-2.1" y="{f(y - 0.9)}" width="1.2" height="1.8" rx="0.5" fill="#ffcf8a"/>' for y in (-18.2, -13.5, -8.2, -2.8, 2.8, 8.2, 13.5, 18.2))
+                + '</g></g>')
+        nabiz = (f'<ellipse rx="26" ry="12" fill="url(#hmKor)" opacity="0">{gorun([(KILIT + 0.5, 0), (KILIT + 0.7, 0.9), (KILIT + 1.6, 0.9, DUZ), (KILIT + 1.9, 0)])}'
+                 f'{tasi([(KILIT + 0.5, f"{GX1 - 8} {GY}"), (KILIT + 1.9, f"{GX0 + 4} {GY}")])}</ellipse>')
+        return f"""<defs><radialGradient id="hmKor"><stop offset="0" stop-color="#ffe2b0"/><stop offset="0.18" stop-color="#ff9d45" stop-opacity="0.75"/><stop offset="0.5" stop-color="#c24e12" stop-opacity="0.25"/><stop offset="1" stop-color="#7a2a06" stop-opacity="0"/></radialGradient>
+ <linearGradient id="hmGece"><stop offset="0" stop-color="#020106" stop-opacity="0.25"/><stop offset="0.36" stop-color="#020106" stop-opacity="0.66"/><stop offset="0.62" stop-color="#020106" stop-opacity="0.9"/><stop offset="1" stop-color="#010003"/></linearGradient>
+ <image id="hmUst" x="-15" y="-30" width="30" height="30" href="{ust_uri}"/><image id="hmAlt" x="-15" y="0" width="30" height="30" href="{alt_uri}"/>
+ <clipPath id="hmK1">{kenar(B0 - 0.1, B1 - 0.45, 26, 3)}</clipPath><clipPath id="hmK2">{kenar(B0 + 0.5, B1 + 0.2, 20, 9)}</clipPath>{k_ust}{k_alt}</defs>
+<g opacity="0">{gorun([(0, 0), (1.4, 1), (13.8, 1), (14.8, 0)])}
+ <rect width="{W}" height="{H}" fill="url(#hmGece)"/>
+ {dev}{isik_agiz}
+ {gemi}
+ {arka}{kollar}{govde}{nabiz}{kok}{kapi}
+ <g opacity="0">{gorun([(2.4, 0), (3.2, 1)])}{etiket("PROJECT HAIL MARY · 2026", 640, 286)}</g>
+</g>"""
+
+    # 14. Interstellar · 2014: Endurance Gargantua'nın çevresinden hız alıp gider, bıraktığı küçük parça kızarıp kaybolur
     def interstellar(self) -> str:
-        """Genel görelilik dışarıdan bakana göre: gemi deliğe yaklaştıkça bize göre yavaşlar (yol hızı ve kendi dönüşü),
-        ışığı kırmızıya kayar ve sönükleşir, işaret ışığının yanıp sönmesi seyrekleşir; olay ufkunun hemen dışında donmuş
-        gibi kalıp kararır, hiç hızlanmaz. Toplanma diski Doppler'le parlar: bize yaklaşan sol yan mavimsi beyaz ve parlak,
-        uzaklaşan sağ yan sönük turuncu-kırmızı; diskin arka yüzü bükülüp gölgenin üstünden ve altından yay olarak görünür."""
-        bx, by, egim = 688, 144, -6
-        RG = 25                                     # gölge yarıçapı
-        T0, T1 = 1.0, 11.8                          # yol boyunca hareketin başı ve donduğu an
-        K, R0, R1, TUR = 0.34, 300.0, 34.0, 550.0   # yörünge basıklığı, ilk ve son yarıçap, toplam dönüş (derece)
-
-        def nokta(u: float) -> tuple[float, float, float]:
-            r = R1 + (R0 - R1) * (1 - u) ** 1.5
-            th = math.radians(-TUR * u)            # açı azalır: sol yan bize doğru gelir, diskle aynı yönde
-            return r * math.cos(th), K * r * math.sin(th), r
-        orn = [nokta(i / 400) for i in range(401)]
-        boy = [0.0]
-        for a, b in zip(orn, orn[1:]):
-            boy.append(boy[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
-        yol = "M" + " L".join(f"{f(x)},{f(y)}" for x, y, _ in orn[::4])
-
-        def yaricap(s: float) -> float:            # yolun kesrinden yarıçap
-            hedef = s * boy[-1]
-            i = next((k for k, L in enumerate(boy) if L >= hedef), len(boy) - 1)
-            return orn[i][2]
-        anlar = [T0 + (T1 - T0) * (i / 36) for i in range(37)]
-        kesir = [1 - (1 - (t - T0) / (T1 - T0)) ** 3 for t in anlar]   # hız (1-v)^2 ile hep azalır, sonda sıfır
-        hareket = [(round(t, 3), round(s, 5), DUZ) for t, s in zip(anlar, kesir)]
-        buyukluk = [0.75 + 0.85 * (yaricap(s) - R1) / (R0 - R1) for s in kesir]   # uzakta büyük, delikte küçük
-        olcek = [(round(t, 3), f"{b:.3f} {b:.3f}", DUZ) for t, b in zip(anlar, buyukluk)]
-        donus = [(round(t, 3), round(-620 * s, 1), DUZ) for t, s in zip(anlar, kesir)]
-        renk = [(T0, "#e4e9f1"), (6.0, "#ebe6df"), (8.2, "#ffbe94"), (9.6, "#ee6a48"), (10.7, "#b8261c"),
-                (11.6, "#5c0c0a"), (12.8, "#1a0303")]
-        isaret_an, t, ara = [], 1.6, 0.42           # işaret ışığı: bize göre giderek seyrek yanar
-        while t < 12.4:
-            isaret_an.append(round(t, 2)); t += ara; ara *= 1.33
-        isaret = gorun([nk for t in isaret_an for nk in [(t, 0, DUZ), (t + 0.05, 1, DUZ), (t + 0.32, 0)]])
-        moduller = "".join(f'<rect x="-2.4" y="-12.6" width="4.8" height="3.4" rx="0.5" fill="currentColor" '
-                           f'fill-opacity="{1 if i % 2 == 0 else 0.62}" stroke="#000" stroke-opacity="0.35" stroke-width="0.3" '
-                           f'transform="rotate({30 * i})"/>' for i in range(12))
-        on_disk = "M-100,0 A100,12 0 0 0 100,0"
-        arka_disk = "M-100,0 A100,12 0 0 1 100,0"
-        # diskin arka yüzünün bükülmüş görüntüleri: gölgeyi üstten kalın, alttan ince saran hilaller
-        ust_yay = "M-74,0 C-60,-3 -54,-43 0,-43 C54,-43 60,-3 74,0 L28,0 C28,-16 16,-28 0,-28 C-16,-28 -28,-16 -28,0 Z"
-        ust_ic = "M-28.6,0 C-28.6,-16.4 -16.4,-28.6 0,-28.6 C16.4,-28.6 28.6,-16.4 28.6,0"
-        alt_yay = "M-36,0 C-34,17 -19,32.5 0,32.5 C19,32.5 34,17 36,0 L27.4,0 C27.4,15 15,27.4 0,27.4 C-15,27.4 -27.4,15 -27.4,0 Z"
-        return f'''<defs>
-  <radialGradient id="isHale" cx="0.5" cy="0.5" r="0.5">
-    <stop offset="0" stop-color="#ffe3b8" stop-opacity="0.32"/><stop offset="0.45" stop-color="#ff9e4a" stop-opacity="0.1"/><stop offset="1" stop-color="#ff9e4a" stop-opacity="0"/>
-  </radialGradient>
-  <linearGradient id="isDisk" gradientUnits="userSpaceOnUse" x1="-104" y1="0" x2="104" y2="0">
-    <stop offset="0" stop-color="#bcd4ff" stop-opacity="0"/><stop offset="0.1" stop-color="#d6e6ff" stop-opacity="0.9"/><stop offset="0.32" stop-color="#f6f9ff"/>
-    <stop offset="0.52" stop-color="#ffeccc" stop-opacity="0.85"/><stop offset="0.74" stop-color="#ff9446" stop-opacity="0.45"/>
-    <stop offset="0.92" stop-color="#b8361a" stop-opacity="0.22"/><stop offset="1" stop-color="#b8361a" stop-opacity="0"/>
-  </linearGradient>
-  <linearGradient id="isYay" gradientUnits="userSpaceOnUse" x1="-68" y1="0" x2="68" y2="0">
-    <stop offset="0" stop-color="#cfe0ff" stop-opacity="0.35"/><stop offset="0.22" stop-color="#e8f0ff"/><stop offset="0.42" stop-color="#fbfcff"/>
-    <stop offset="0.6" stop-color="#ffe2b4" stop-opacity="0.8"/><stop offset="0.82" stop-color="#ff8a40" stop-opacity="0.42"/><stop offset="1" stop-color="#b8361a" stop-opacity="0.15"/>
-  </linearGradient>
-  <filter id="isBulanik" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6"/></filter>
-  <mask id="isGolge" maskUnits="userSpaceOnUse" x="-500" y="-300" width="1000" height="600">
-    <rect x="-500" y="-300" width="1000" height="600" fill="#fff"/><circle r="{RG + 0.5}" fill="#000"/>
-  </mask>
+        """Gargantua ışık bükülmesi hesabıyla çizilmiş pişmiş resimdir (film_resimleri.py). Endurance önden yavaş gelir,
+        sağdan dönerken hızlanır, en yakın yerde küçük mekiği bırakır ve arkadan savrularak çıkar. Mekik delikte bize göre
+        yavaşlar, ışığı kırmızıya kayar, işareti seyrekleşir, ufkun kıyısında sönüp kaybolur."""
+        bx, by, egim = 600, 140, -5
+        yol = "M-660,92 C-470,96 -330,96 -200,100 C-60,104 130,104 194,52 C236,14 222,-44 150,-78 C70,-112 -90,-104 -200,-112 C-300,-120 -440,-160 -680,-290"
+        # hız giderek artar: yolun kesri, hızın birikiminden
+        T0, T1, N = 0.8, 9.2, 42
+        hiz = lambda u: 0.50 + 0.35 * u + 2.9 * max(0.0, u - 0.42) ** 1.6 + 0.9 * math.exp(-((u - 0.60) / 0.10) ** 2)
+        bir = [0.0]
+        for i in range(N):
+            bir.append(bir[-1] + hiz((i + 0.5) / N))
+        hareket = [(round(T0 + (T1 - T0) * i / N, 3), round(b / bir[-1], 5), DUZ) for i, b in enumerate(bir)]
+        zaman = lambda s: next(t for t, k, _ in hareket if k >= s)
+        ayril = zaman(0.50)                                # sağdaki en yakın nokta
+        boyut = [(T0, "1.35 1.35"), (zaman(0.34), "0.95 0.95"), (zaman(0.52), "0.72 0.72"), (zaman(0.70), "0.55 0.55"), (T1, "1.2 1.2", "0.5 0 0.8 0.5")]
+        iz = gorun([(ayril, 0), (ayril + 0.5, 0.75), (T1, 1)])
+        gemi = (f'<g opacity="0">{gorun([(T0, 0, DUZ), (T0 + 0.05, 1, DUZ), (T1, 1, DUZ), (T1 + 0.05, 0, DUZ)])}'
+                f'<g opacity="0">{iz}<g>{yolda(yol, hareket, True)}<g>{olcekle(boyut)}'
+                '<rect x="-190" y="-5" width="186" height="10" rx="5" fill="url(#isIz)" opacity="0.5"/><rect x="-150" y="-1.6" width="146" height="3.2" rx="1.6" fill="url(#isIz)"/></g></g></g>'
+                f'<g>{yolda(yol, hareket)}<g>{olcekle(boyut)}<g transform="rotate(-20) scale(1 0.66)"><g>{dondur([(0, 0), (15, 900, DUZ)])}'
+                f'<image x="-40" y="-40" width="80" height="80" href="{foto_uri("endurance.webp")}"/></g></g></g></g></g>')
+        # küçük parça: ayrıldığı yerden diskin önünden süzülüp gölgenin kıyısına
+        P0, P1 = ayril, 12.2
+        dusus = "M196,42 C186,72 120,66 70,50 C42,41 24,36 8,24"
+        an = [P0 + (P1 - P0) * i / 24 for i in range(25)]
+        dusme = [(round(t, 3), round(1 - (1 - i / 24) ** 2.6, 5), DUZ) for i, t in enumerate(an)]
+        g = P1 - P0
+        renk = [(P0, "#f4f1ea"), (P0 + 0.34 * g, "#ffe0b8"), (P0 + 0.50 * g, "#ff9d5c"), (P0 + 0.64 * g, "#f0522c"), (P0 + 0.80 * g, "#b3180e"), (P1, "#4a0503")]
+        isaret_an, t, ara = [], P0 + 0.5, 0.45
+        while t < P1 - 0.5:
+            isaret_an.append(round(t, 2)); t += ara; ara *= 1.35
+        isaret = gorun([nk for t in isaret_an for nk in [(t, 0, DUZ), (t + 0.05, 1, DUZ), (t + 0.34, 0)]])
+        mekik = (f'<g opacity="0">{gorun([(P0, 0, DUZ), (P0 + 0.05, 1, DUZ), (P1 - 1.4, 1, DUZ), (P1 + 0.5, 0)])}<g>{yolda(dusus, dusme)}'
+                 f'<g>{olcekle([(P0, "1 1"), (P1, "0.55 0.55", DUZ)])}<g color="#f4f1ea">{degistir("color", renk)}'
+                 f'<g>{dondur([(P0, 150), (P1, 330, "0.2 0.6 0.4 1")])}'
+                 '<path d="M11,0 L2,-4.2 L-8,-6.4 L-9,0 L-8,6.4 L2,4.2 Z" fill="currentColor" stroke="#000" stroke-opacity="0.45" stroke-width="0.6"/>'
+                 '<path d="M11,0 L2,4.2 L-8,6.4 L-9,0 Z" fill="#000" opacity="0.32"/><path d="M6.4,-1.6 L2.4,-2.6 V2.6 L6.4,1.6 Z" fill="#0c0e14" opacity="0.8"/></g>'
+                 f'<circle r="11" fill="currentColor" opacity="0.14"/><circle r="4.2" fill="currentColor" opacity="0">{isaret}</circle></g></g></g></g>')
+        ayrilma = (f'<g transform="translate(198 42)" opacity="0">{gorun([(ayril - 0.05, 0), (ayril + 0.06, 0.9, DUZ), (ayril + 0.7, 0)])}<circle r="13" fill="url(#parlama)"/></g>')
+        # diskin önünden kayan parlak tutamlar: disk dönüyor görünsün
+        tutam = "".join(f'<ellipse rx="{rx}" ry="2.4" fill="url(#isTutam)" opacity="0">{degistir("opacity", [(b, 0), (b + 0.9, 0.85), (b + 2.4, 0.85), (b + 3.3, 0)])}'
+                        f'{tasi([(b, "-118 3"), (b + 1.65, "0 6", DUZ), (b + 3.3, "118 3", DUZ)])}</ellipse>'
+                        for b, rx in ((1.4, 26), (3.2, 18), (4.6, 30), (6.6, 20), (8.2, 28), (9.9, 22)))
+        return f"""<defs>
+ <linearGradient id="isIz" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bcd6ff" stop-opacity="0"/><stop offset="0.7" stop-color="#cfe2ff" stop-opacity="0.55"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+ <radialGradient id="isKaranlik"><stop offset="0" stop-color="#050308" stop-opacity="0.8"/><stop offset="0.6" stop-color="#050308" stop-opacity="0.5"/><stop offset="1" stop-color="#050308" stop-opacity="0"/></radialGradient>
+ <radialGradient id="isTutam"><stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/><stop offset="1" stop-color="#ffe2b0" stop-opacity="0"/></radialGradient>
 </defs>
-<g transform="translate({bx} {by}) rotate({egim}) scale(1.15)">
- <g opacity="0">{gorun([(0.2, 0), (2.4, 1), (13.8, 1), (15, 0)])}
-  <circle r="86" fill="url(#isHale)"/>
-  <path d="{arka_disk}" fill="none" stroke="url(#isDisk)" stroke-width="3.6" opacity="0.55"/>
-  <path d="{ust_yay}" fill="url(#isYay)" opacity="0.55" filter="url(#isBulanik)"/>
-  <path d="{ust_yay}" fill="url(#isYay)" opacity="0.68"/>
-  <path d="{ust_ic}" fill="none" stroke="url(#isYay)" stroke-width="2.4"/>
-  <path d="{ust_ic}" fill="none" stroke="#fff8ec" stroke-width="0.6" opacity="0.6"/>
-  <path d="{alt_yay}" fill="url(#isYay)" opacity="0.45" filter="url(#isBulanik)"/>
-  <path d="{alt_yay}" fill="url(#isYay)" opacity="0.85"/>
-  <circle r="{RG}" fill="#000"/>
-  <circle r="{RG + 1.4}" fill="none" stroke="url(#isYay)" stroke-width="1.1"/>
-  <circle r="{RG + 1.4}" fill="none" stroke="#fff8ec" stroke-width="0.4" opacity="0.7"/>
-  <path d="{on_disk}" fill="none" stroke="url(#isDisk)" stroke-width="10" opacity="0.45" filter="url(#isBulanik)"/>
-  <path d="{on_disk}" fill="none" stroke="url(#isDisk)" stroke-width="5.2"/>
-  <path d="{on_disk}" fill="none" stroke="#fff" stroke-width="1" opacity="0.55"/>
-  <path d="{on_disk}" fill="none" stroke="#fff" stroke-width="0.8" stroke-dasharray="6 14" opacity="0.35">{degistir("stroke-dashoffset", [(0, 0), (15, -170, DUZ)])}</path>
- </g>
- <g mask="url(#isGolge)"><g opacity="0">{gorun([(T0, 0), (T0 + 0.3, 1), (13.8, 1), (15, 0)])}
-  <g>{yolda(yol, hareket)}<g>{olcekle(olcek)}<g color="#e4e9f1">{degistir("color", renk)}<g transform="rotate(-18)"><g transform="scale(1.5 0.62)"><g>{dondur(donus)}
-   <circle r="10.9" fill="none" stroke="currentColor" stroke-opacity="0.85" stroke-width="1.3"/>
-   <path d="M-10.9,0 H10.9" stroke="currentColor" stroke-opacity="0.7" stroke-width="0.5"/>
-   {moduller}
-   <circle r="2.2" fill="currentColor" stroke="#000" stroke-opacity="0.35" stroke-width="0.3"/>
-  </g></g></g>
-   <circle r="1.4" fill="currentColor" opacity="0" filter="url(#isik)">{isaret}</circle>
-  </g></g></g>
- </g></g>
+<g transform="translate({bx} {by}) rotate({egim})">
+ <g opacity="0">{gorun([(0.2, 0), (2.0, 1), (13.6, 1), (14.8, 0)])}<g>{olcekle([(0, "0.98 0.98"), (15, "1.1 1.1", DUZ)])}
+  <ellipse rx="380" ry="200" fill="url(#isKaranlik)"/>
+  <image x="-250" y="-150" width="500" height="300" href="{foto_uri("gargantua.webp")}"/>{tutam}</g></g>
+ {ayrilma}{mekik}{gemi}
 </g>
-<g opacity="0">{gorun([(2.6, 0), (3.4, 1), (13.0, 1), (13.8, 0)])}{etiket("INTERSTELLAR · 2014", bx, by + 92)}</g>'''
+<g opacity="0">{gorun([(2.6, 0), (3.4, 1), (13.0, 1), (13.8, 0)])}{etiket("INTERSTELLAR · 2014", bx, 287)}</g>"""
 
     # ---------- ışık oyunları ----------
     def isik_oyunlari(self) -> None:
@@ -1438,29 +1375,31 @@ class Sahne:
                   + tanim + "".join(self.durgun) + "</svg>")
         resim = f'<image width="{W}" height="{H}" href="{resme_pisir(durgun, ARKA)}"/>'
         assert bas.count(ARKA_YER) == 1
-        return bas.replace(ARKA_YER, resim), self.anomaliler, son
+        for a in self.anomaliler:
+            a["svg"] = hafiflet(a["svg"]).replace(' fill="freeze"', "")   # süre bitince gövde zaten gizlenir, son değeri tutmak gereksiz
+        return hafiflet(bas.replace(ARKA_YER, resim)), self.anomaliler, hafiflet(son)
 
 
 # anomaliler ve süreleri (saniye); sıra yalnız ANOMALILER dizisinin sırasıdır, oynama sırası zincirden gelir
 SURELER = {"sputnik": 11, "apollo": 13, "voyager": 15, "hubble": 13.5, "starman": 13.5,
            "starship": 14, "halley": 12, "buyukayi": 9, "monolit": 12, "hiperuzay": 15,
-           "majortom": 13, "turksat": 12, "hailmary": 14, "interstellar": 15}
+           "majortom": 13, "turksat": 12, "hailmary": 15, "interstellar": 15}
 
 
 ARKA_YER = "<!--ARKA-->"
-ARKA = FOTO / "arka-plan.jpg"     # pişmiş arka plan; yanındaki .iz dosyası hangi durgun SVG'den çıktığını tutar
+ARKA = FOTO / "arka-plan.webp"    # pişmiş arka plan; yanındaki .iz dosyası hangi durgun SVG'den çıktığını tutar
 ARKA_CIZIM, ARKA_OLCEK = 2, 1.5   # 2 katta çizilir, 1,5 kata inerek saklanır: telefonda keskin, dosya küçük
 
 
 def resme_pisir(svg: str, dosya: Path) -> str:
     """Kıpırdamayan çizimi bir kez resme çevirir ve data adresi döndürür. Arka plan (gürültü bulutsu, Samanyolu, uzak
-    yıldızlar, kenar ışıkları) JPEG olur; kayan yıldız katmanları saydam PNG. Telefonda takılmanın kaynağı bunlardı:
+    yıldızlar, kenar ışıkları) kayıplı, kayan yıldız katmanları kayıpsız ve saydam WebP olur. Telefonda takılmanın kaynağı bunlardı:
     süzgeçler ve binlerce daire her karede yeniden çiziliyordu, resim ise neredeyse bedava çizilir.
     SVG değişmediyse eski resim kullanılır; değiştiyse Chrome (playwright) ile yeniden çizilir."""
     import hashlib
-    saydam = dosya.suffix == ".png"
+    saydam = dosya != ARKA
     iz = dosya.with_suffix(".iz")
-    imza = hashlib.sha256(f"{ARKA_CIZIM}|{ARKA_OLCEK}|{svg}".encode("utf-8")).hexdigest()
+    imza = hashlib.sha256(f"{ARKA_CIZIM}|{ARKA_OLCEK}|webp48|{svg}".encode("utf-8")).hexdigest()
     if not (dosya.exists() and iz.exists() and iz.read_text(encoding="utf-8").strip() == imza):
         from io import BytesIO
         from PIL import Image
@@ -1475,12 +1414,11 @@ def resme_pisir(svg: str, dosya: Path) -> str:
         resim = Image.open(BytesIO(png)).convert("RGBA" if saydam else "RGB")
         resim = resim.resize((int(W * ARKA_OLCEK), int(H * ARKA_OLCEK)), Image.LANCZOS)
         if saydam:
-            resim.save(dosya, "PNG", optimize=True)
+            resim.save(dosya, "WEBP", lossless=True, quality=100, method=6)
         else:
-            resim.save(dosya, "JPEG", quality=76, optimize=True, progressive=True)
+            resim.save(dosya, "WEBP", quality=48, method=6)
         iz.write_text(imza + "\n", encoding="utf-8")
-    tur = "png" if saydam else "jpeg"
-    return f"data:image/{tur};base64," + base64.b64encode(dosya.read_bytes()).decode("ascii")
+    return foto_uri(dosya.name)
 
 
 def parcala() -> tuple[str, list[dict], str]:
